@@ -1,0 +1,9 @@
+{
+  "name": "hoopland-draft-generator",
+  "version": "1.0.0",
+  "description": "Browser-based Hoopland draft class generator",
+  "private": true,
+  "scripts": {
+    "test": "node tests/test.js"
+  }
+}
