@@ -55,13 +55,6 @@ The rest are 4 to 4.5 stars, with the 4.5 share rising with quality. At 3 five-s
 - **Jersey numbers:** 0 to 11 are most common, then 00, 20, 21, 23, 25, 30, 31, 41. Rare: 24, 77, 88 and other numbers real NBA players wear.
 
 Every class is checked against all of these rules before you can download it.
-
-## Put it on GitHub Pages
-
-1. Create a new repository and upload every file in this folder.
-2. Open **Settings → Pages**, set **Source** to "Deploy from a branch", choose `main` and `/ (root)`, then save.
-3. After a minute your generator is live at `https://<your-username>.github.io/<repo-name>/`.
-
 ## Files
 
 | File | What it does |
