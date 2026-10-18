@@ -21,7 +21,7 @@ Leave the seed empty for a new class every click. Type a seed to rebuild an exac
 
 The rest are 4 and 4.5 stars. The 4.5-star slider picks how many of them are 4.5 (it starts at a suggested value and tops out at every non-3.5 player). At 3 five-stars, 80% of the class is 4★ or better.
 
-- **Cap OVR** = 30 + 7 × pot. 5★ = 100, 4.5★ = 93 to 99, 4★ = 86 to 92, 3.5★ = 79 to 85.
+- **Ceiling OVR:** Hoopland grows every player to his star tier's full ceiling, so that's what the file stores. 5★ = 100, 4.5★ = 93, 4★ = 86, 3.5★ = 79.
 - **Starting OVR** = cap minus 21. The 3 best prospects start 7 to 14 below their cap.
 - **Ages** 19 to 22, random.
 

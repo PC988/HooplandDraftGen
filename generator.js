@@ -350,7 +350,9 @@
   function generate(q, seed, n45) {
     var rng = makeRng(seed);
     var pots = rng.shuffle(classTiers(q, n45));
-    var capsOvr = pots.map(function (p) { return p === 10 ? 100 : 30 + 7 * p + rng.randint(0, 6); });
+    // Hoopland grows players to their star tier's full ceiling no matter what the stored caps say,
+    // so caps are set to exactly that ceiling: 5★ 100, 4.5★ 93, 4★ 86, 3.5★ 79.
+    var capsOvr = pots.map(function (p) { return 30 + 7 * p; });
     var tie = pots.map(function () { return rng.random(); });
     var order = range(0, CLASS_SIZE - 1).sort(function (a, b) { return (capsOvr[b] - capsOvr[a]) || (tie[b] - tie[a]); });
     var top3 = order.slice(0, 3), best9 = order.slice(0, 9);
@@ -475,8 +477,7 @@
       if (cur.some(function (c, j) { return !(c >= 0 && c <= capv[j] && capv[j] <= 20); })) bad(p, "attribute out of range");
       var co = ovrOf(cur), ko = ovrOf(capv);
       if (p.pot < 7) bad(p, "below 3.5 stars");
-      if (p.pot === 10 && ko !== 100) bad(p, "5-star cap not 100");
-      if (p.pot < 10 && Math.floor((ko - 30) / 7) !== p.pot) bad(p, "cap " + ko + " not in pot " + p.pot + " band");
+      if (ko !== 30 + 7 * p.pot) bad(p, "cap " + ko + " is not the pot " + p.pot + " ceiling");
       var gap = ko - co;
       if (m.top3) { tops++; if (gap < 7 || gap > 14) bad(p, "top-3 gap " + gap); } else if (gap !== 21) bad(p, "gap " + gap);
       if (p.age < 19 || p.age > 22) bad(p, "age");
