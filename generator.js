@@ -347,33 +347,144 @@
   }
 
   // ---------------------------------------------------------- CLASS ----
-  function generate(q, seed, n45) {
-    var rng = makeRng(seed);
-    var pots = rng.shuffle(classTiers(q, n45));
-    // Hoopland grows players to their star tier's full ceiling no matter what the stored caps say,
-    // so caps are set to exactly that ceiling: 5★ 100, 4.5★ 93, 4★ 86, 3.5★ 79.
-    var capsOvr = pots.map(function (p) { return 30 + 7 * p; });
-    var tie = pots.map(function () { return rng.random(); });
-    var order = range(0, CLASS_SIZE - 1).sort(function (a, b) { return (capsOvr[b] - capsOvr[a]) || (tie[b] - tie[a]); });
-    var top3 = order.slice(0, 3), best9 = order.slice(0, 9);
-    // gear: the 9 best + 9 random players from the bottom half of this class
-    var wearers = best9.concat(rng.sample(order.slice(CLASS_SIZE / 2), 9));
-    // positions: equal split across pos 0-8
-    var positions = [];
-    for (var p = 0; p < 9; p++) for (var k = 0; k < Math.floor(CLASS_SIZE / 9); k++) positions.push(p);
-    positions = positions.concat(rng.sample(range(0, 8), CLASS_SIZE - positions.length));
-    rng.shuffle(positions);
-
-    var used = {}, players = [];
-    for (var i = 0; i < CLASS_SIZE; i++) {
-      var pot = pots[i], capOvr = capsOvr[i], pos = positions[i];
+  // opts = {
+  //   counts: {10: n, 9: n, 8: n, 7: n, 6: n}   players per star tier (pot 10 = 5★ ... pot 6 = 3★)
+  //   archMin: {"Slasher": n, ...}              at least n players with this primary archetype
+  //   custom: [{fn, ln, num, pot, arch}]          num/pot/arch null = random
+  // }
+  var POTS = [10, 9, 8, 7, 6];
+  function starLabel(pot) { return (pot / 2) + "★"; }
+  function countsFromAuto(q5, n45) {
+    var t = classTiers(q5, n45), c = { 10: 0, 9: 0, 8: 0, 7: 0, 6: 0 };
+    t.forEach(function (p) { c[p]++; });
+    return c;
+  }
+  // typical number of each archetype in a class of N (positions split evenly, rarity weights within each position)
+  function expectedArch(N) {
+    var out = {};
+    Object.keys(ARCH).forEach(function (a) { out[a] = 0; });
+    for (var pos = 0; pos <= 8; pos++) {
       var elig = Object.keys(ARCH).filter(function (a) { return fits(a, pos); });
-      var prim = rng.weighted(elig, elig.map(function (a) { return ARCH[a][8]; }));
+      var tw = elig.reduce(function (t, a) { return t + ARCH[a][8]; }, 0);
+      elig.forEach(function (a) { out[a] += (N / 9) * ARCH[a][8] / tw; });
+    }
+    return out;
+  }
+  function totalOf(counts) { return POTS.reduce(function (a, p) { return a + (counts[p] || 0); }, 0); }
+  function parseNum(v) {
+    if (v == null) return null;
+    var s = String(v).trim();
+    if (s === "") return null;
+    if (s === "00") return 100;
+    var n = parseInt(s, 10);
+    return n >= 0 && n <= 99 && String(n) === s.replace(/^0(?=\d)/, "") ? n : null;
+  }
+
+  function checkOpts(opts) {
+    var N = totalOf(opts.counts), errs = [];
+    if (N < 9) errs.push("A class needs at least 9 players (one per position).");
+    if (N > 150) errs.push("A class can have at most 150 players.");
+    var mins = 0;
+    Object.keys(opts.archMin || {}).forEach(function (a) { mins += opts.archMin[a] || 0; });
+    var custom = opts.custom || [];
+    if (custom.length > N) errs.push("You added " + custom.length + " custom players but the class only has " + N + ".");
+    if (mins > N) errs.push("Archetype minimums add up to " + mins + " but the class only has " + N + " players.");
+    custom.forEach(function (c, i) {
+      if (!String(c.fn || "").trim() || !String(c.ln || "").trim()) errs.push("Custom player " + (i + 1) + " needs a first and last name.");
+      if (c.arch && !ARCH[c.arch]) errs.push("Unknown archetype " + c.arch);
+    });
+    return errs;
+  }
+
+  // Lock a free slot that satisfies a requirement. Positions are swapped between free slots so the split stays even.
+  function claimSlot(rng, slots, req, state, label) {
+    var free = slots.filter(function (s) { return !s.locked; });
+    var cands = req.pot != null ? free.filter(function (s) { return s.pot === req.pot; }) : free;
+    if (!cands.length) {
+      var byPot = {};
+      free.forEach(function (s) { (byPot[s.pot] = byPot[s.pot] || []).push(s); });
+      var donorPot = Object.keys(byPot).sort(function (a, b) { return byPot[b].length - byPot[a].length; })[0];
+      var conv = rng.choice(byPot[donorPot]);
+      state.notes.push(label + ": no free " + starLabel(req.pot) + " spot, so one " + starLabel(+donorPot) + " spot became " + starLabel(req.pot) + ".");
+      conv.pot = req.pot; cands = [conv];
+    }
+    var slot;
+    if (req.arch) {
+      var fit = cands.filter(function (s) { return fits(req.arch, s.pos); });
+      if (fit.length) slot = rng.choice(fit);
+      else {
+        slot = rng.choice(cands);
+        var donors = free.filter(function (s) { return s !== slot && fits(req.arch, s.pos); });
+        if (donors.length) { var d = rng.choice(donors), t = d.pos; d.pos = slot.pos; slot.pos = t; }
+        else {
+          slot.pos = rng.randint(ARCH[req.arch][0], ARCH[req.arch][1]);
+          state.posBroken = true;
+          state.notes.push(label + ": not enough " + req.arch + " positions left, so the position split is no longer even.");
+        }
+      }
+      slot.arch = req.arch;
+    } else slot = rng.choice(cands);
+    slot.locked = true;
+    return slot;
+  }
+
+  function generate(opts, seed) {
+    var rng = makeRng(seed), counts = opts.counts, N = totalOf(counts);
+    var state = { notes: [], posBroken: false };
+    // slots: one per player, with a star tier and a position (equal split across pos 0-8)
+    var pots = [];
+    POTS.forEach(function (p) { for (var k = 0; k < (counts[p] || 0); k++) pots.push(p); });
+    var positions = [];
+    for (var p = 0; p < 9; p++) for (var k = 0; k < Math.floor(N / 9); k++) positions.push(p);
+    positions = positions.concat(rng.sample(range(0, 8), N - positions.length));
+    rng.shuffle(positions);
+    var slots = pots.map(function (pt, i) { return { pot: pt, pos: positions[i], arch: null, custom: null, locked: false }; });
+
+    // 1. custom players
+    (opts.custom || []).forEach(function (c) {
+      var s = claimSlot(rng, slots, { pot: c.pot || null, arch: c.arch || null }, state, (c.fn + " " + c.ln).trim());
+      s.custom = c;
+    });
+    // 2. archetype minimums (narrowest position range first)
+    var have = {};
+    slots.forEach(function (s) { if (s.arch) have[s.arch] = (have[s.arch] || 0) + 1; });
+    Object.keys(opts.archMin || {})
+      .sort(function (a, b) { return (ARCH[a][1] - ARCH[a][0]) - (ARCH[b][1] - ARCH[b][0]); })
+      .forEach(function (a) {
+        for (var n = (have[a] || 0); n < (opts.archMin[a] || 0); n++) claimSlot(rng, slots, { pot: null, arch: a }, state, a + " minimum");
+      });
+    // 3. everyone else: archetype by rarity among those that play the slot's position
+    slots.forEach(function (s) {
+      if (s.arch) return;
+      var elig = Object.keys(ARCH).filter(function (a) { return fits(a, s.pos); });
+      s.arch = rng.weighted(elig, elig.map(function (a) { return ARCH[a][8]; }));
+    });
+    rng.shuffle(slots);
+
+    // ceilings: Hoopland grows players to their star tier's full ceiling no matter what the stored caps say
+    var capsOvr = slots.map(function (s) { return 30 + 7 * s.pot; });
+    var tie = slots.map(function () { return rng.random(); });
+    var order = range(0, N - 1).sort(function (a, b) { return (capsOvr[b] - capsOvr[a]) || (tie[b] - tie[a]); });
+    var top3 = order.slice(0, Math.min(3, N));
+    // gear: 30% of the class, half the best players, half random players from the bottom half
+    var nWear = Math.round(N * 0.3), nBest = Math.ceil(nWear / 2);
+    var best = order.slice(0, nBest);
+    var bottom = order.slice(Math.ceil(N / 2)).filter(function (i) { return best.indexOf(i) < 0; });
+    var wearers = best.concat(rng.sample(bottom, nWear - nBest));
+
+    // reserve custom names so generated players can't take them
+    var used = {};
+    slots.forEach(function (s) { if (s.custom) used[s.custom.fn + "|" + s.custom.ln] = true; });
+
+    var players = [];
+    for (var i = 0; i < N; i++) {
+      var slot = slots[i], pot = slot.pot, capOvr = capsOvr[i], pos = slot.pos, prim = slot.arch;
+      var elig = Object.keys(ARCH).filter(function (a) { return fits(a, pos); });
       var arcs = [prim];
       if (pot >= 9) {
         var partners = HYBRID_PARTNERS[prim].filter(function (a) { return fits(a, pos); });
         if (!partners.length) partners = elig.filter(function (a) { return a !== prim; });
-        arcs.push(rng.choice(partners));
+        if (partners.length) arcs.push(rng.choice(partners));
       }
       var w1 = skillWeights(prim), w = w1;
       if (arcs.length > 1) { var w2 = skillWeights(arcs[1]); w = {}; SKILLS.forEach(function (s) { w[s] = 0.6 * w1[s] + 0.4 * w2[s]; }); }
@@ -392,10 +503,11 @@
       var c = rng.weighted(COUNTRIES, COUNTRIES.map(function (x) { return x[1]; }));
       var ctry = c[0], dark = rng.random() < c[2];
       var skin = rng.pick(dark ? SKIN_DARK : SKIN_LIGHT);
-      var nm = makeName(rng, ctry, dark, used);
+      var nm = slot.custom ? [String(slot.custom.fn).trim(), String(slot.custom.ln).trim()] : makeName(rng, ctry, dark, used);
       var town = rng.choice(DATA.TOWNS[ctry]);
       var r = rng.random();
       var num = r < 0.60 ? rng.choice(NUM_VERY_COMMON) : (r < 0.88 ? rng.choice(NUM_COMMON) : rng.choice(NUM_RARE));
+      if (slot.custom && parseNum(slot.custom.num) != null) num = parseNum(slot.custom.num);
 
       var pl = clone(TEMPLATE.PLAYER);
       var fields = {
@@ -418,14 +530,16 @@
         shirtC: "FFFFFF", tieC: rng.choice(["C42C36", "10316B", "306943", "141020"]),
         pantC: "1F2937", shoeC: "000000", laceC: "", soleC: "000000"
       }];
-      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark } });
+      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom } });
     }
     function skillSum(pl, idx) { return SKILLS.reduce(function (a, s) { return a + pl.attributes[s][idx]; }, 0); }
     players.sort(function (a, b) {
       return (skillSum(b.player, 1) - skillSum(a.player, 1)) || (skillSum(b.player, 0) - skillSum(a.player, 0));
     });
     players.forEach(function (x, n) { x.player.id = n + 1; });
-    return players;
+    var finalCounts = { 10: 0, 9: 0, 8: 0, 7: 0, 6: 0 };
+    slots.forEach(function (s) { finalCounts[s.pot]++; });
+    return { players: players, counts: finalCounts, notes: state.notes, posBroken: state.posBroken, nWear: nWear, nBest: nBest };
   }
 
   // ------------------------------------------------------- VALIDATOR ----
@@ -439,18 +553,36 @@
   [[], ["L_Knee", "R_Knee"], ["L_Shin", "R_Shin"], ["L_Knee", "R_Knee", "L_Shin", "R_Shin"]].forEach(function (s) { LOWER_OK[setKey(s)] = 1; });
   var ALLOWED_NUMS = NUM_VERY_COMMON.concat(NUM_COMMON, NUM_RARE);
 
-  function validate(players, q, n45) {
-    var errs = [];
+  function validate(res, opts) {
+    var players = res.players, N = players.length, errs = [];
     function bad(p, m) { errs.push(p.fn + " " + p.ln + ": " + m); }
-    var pots = players.map(function (x) { return x.player.pot; }).sort().join(",");
-    if (pots !== classTiers(q, n45).sort().join(",")) errs.push("tier counts do not match class quality");
+    if (N !== totalOf(opts.counts)) errs.push("class size " + N + " does not match the tier counts");
+    var got = { 10: 0, 9: 0, 8: 0, 7: 0, 6: 0 };
+    players.forEach(function (x) { got[x.player.pot] = (got[x.player.pot] || 0) + 1; });
+    POTS.forEach(function (p) { if (got[p] !== res.counts[p]) errs.push(starLabel(p) + " count " + got[p] + " != " + res.counts[p]); });
+    var arcCount = {};
+    players.forEach(function (x) { arcCount[x.meta.arcs[0]] = (arcCount[x.meta.arcs[0]] || 0) + 1; });
+    Object.keys(opts.archMin || {}).forEach(function (a) {
+      if ((arcCount[a] || 0) < opts.archMin[a]) errs.push(a + ": " + (arcCount[a] || 0) + " < minimum " + opts.archMin[a]);
+    });
+    (opts.custom || []).forEach(function (c) {
+      var hit = players.filter(function (x) { return x.meta.custom === c; })[0];
+      if (!hit) { errs.push("custom player " + c.fn + " " + c.ln + " missing"); return; }
+      var p = hit.player;
+      if (p.fn !== String(c.fn).trim() || p.ln !== String(c.ln).trim()) bad(p, "custom name changed");
+      if (c.pot && p.pot !== c.pot) bad(p, "custom stars not applied");
+      if (c.arch && hit.meta.arcs[0] !== c.arch) bad(p, "custom archetype not applied");
+      if (parseNum(c.num) != null && p.num !== parseNum(c.num)) bad(p, "custom jersey not applied");
+    });
     var names = {}, wearers = 0, tops = 0, posCount = new Array(9).fill(0);
     var capSorted = players.map(function (x) { return ovrOf(SKILLS.map(function (s) { return x.player.attributes[s][1]; })); })
       .sort(function (a, b) { return b - a; });
-    var ninthCap = capSorted[8], medianCap = capSorted[CLASS_SIZE / 2 - 1];
+    var bestCap = capSorted[res.nBest - 1], medianCap = capSorted[Math.ceil(N / 2) - 1];
     players.forEach(function (x) {
       var p = x.player, a = p.appearance, acc = p.accessories, skin = a.skinC, m = x.meta;
-      var key = p.fn + "|" + p.ln; if (names[key]) bad(p, "duplicate name"); names[key] = 1;
+      var key = p.fn + "|" + p.ln;
+      if (names[key] && !m.custom) bad(p, "duplicate name");
+      names[key] = 1;
       if (JSON.stringify(p).indexOf("262539") >= 0) bad(p, "uses banned color 262539");
       if (HAIR_IDS.indexOf(+a.hair) < 0) bad(p, "banned hair " + a.hair);
       if (FHAIR_BANNED.indexOf(+a.fHair) >= 0 || +a.fHair < 0 || +a.fHair > 31) bad(p, "banned facial hair " + a.fHair);
@@ -473,15 +605,16 @@
       var wore = on.length > 0 || head; if (wore) wearers++;
       if (wore !== m.wearer) bad(p, "wearer flag mismatch");
       var cur = SKILLS.map(function (s) { return p.attributes[s][0]; }), capv = SKILLS.map(function (s) { return p.attributes[s][1]; });
-      if (wore && ovrOf(capv) < ninthCap && ovrOf(capv) > medianCap) bad(p, "gear on a player outside best 9 / bottom half");
+      if (wore && ovrOf(capv) < bestCap && ovrOf(capv) > medianCap) bad(p, "gear on a player outside the best / bottom half");
       if (cur.some(function (c, j) { return !(c >= 0 && c <= capv[j] && capv[j] <= 20); })) bad(p, "attribute out of range");
       var co = ovrOf(cur), ko = ovrOf(capv);
-      if (p.pot < 7) bad(p, "below 3.5 stars");
+      if (POTS.indexOf(p.pot) < 0) bad(p, "stars out of range");
       if (ko !== 30 + 7 * p.pot) bad(p, "cap " + ko + " is not the pot " + p.pot + " ceiling");
       var gap = ko - co;
       if (m.top3) { tops++; if (gap < 7 || gap > 14) bad(p, "top-3 gap " + gap); } else if (gap !== 21) bad(p, "gap " + gap);
       if (p.age < 19 || p.age > 22) bad(p, "age");
-      if (ALLOWED_NUMS.indexOf(p.num) < 0) bad(p, "jersey number");
+      if (!m.custom && ALLOWED_NUMS.indexOf(p.num) < 0) bad(p, "jersey number");
+      if (!(p.num >= 0 && p.num <= 100)) bad(p, "jersey out of range");
       if (!fits(m.arcs[0], p.pos)) bad(p, "archetype does not play this position");
       posCount[p.pos]++;
       Object.keys(p.tendencies).forEach(function (k) {
@@ -491,9 +624,10 @@
       });
       if (p.skills.length > 2) bad(p, "too many badges");
     });
-    if (wearers !== 18) errs.push(wearers + " players wear gear, expected 18");
-    if (tops !== 3) errs.push("top-3 count " + tops);
-    if (Math.min.apply(null, posCount) < 6 || Math.max.apply(null, posCount) > 7) errs.push("position split uneven " + posCount);
+    if (wearers !== res.nWear) errs.push(wearers + " players wear gear, expected " + res.nWear);
+    if (tops !== Math.min(3, N)) errs.push("top-3 count " + tops);
+    if (!res.posBroken && (Math.min.apply(null, posCount) < Math.floor(N / 9) || Math.max.apply(null, posCount) > Math.ceil(N / 9)))
+      errs.push("position split uneven " + posCount);
     return errs;
   }
 
@@ -519,17 +653,22 @@
   }
 
   // Generate, validate, retry with the next seed if any rule breaks.
-  function makeClass(q, seed, n45) {
+  function makeClass(opts, seed) {
+    var bad = checkOpts(opts);
+    if (bad.length) throw new Error(bad.join(" "));
+    var errs = [];
     for (var t = 0; t < 20; t++) {
-      var players = generate(q, seed + t, n45), errs = validate(players, q, n45);
-      if (!errs.length) return { players: players, seed: seed + t };
+      var res = generate(opts, seed + t);
+      errs = validate(res, opts);
+      if (!errs.length) { res.seed = seed + t; return res; }
     }
     throw new Error("Validation failed: " + errs.slice(0, 5).join("; "));
   }
 
   var API = {
     CLASS_SIZE: CLASS_SIZE, SKILLS: SKILLS, BADGE_NAMES: BADGE_NAMES, ARCH: ARCH,
-    classTiers: classTiers, tierSummary: tierSummary, maxN45: maxN45, defaultN45: defaultN45, generate: generate, validate: validate,
+    classTiers: classTiers, tierSummary: tierSummary, maxN45: maxN45, defaultN45: defaultN45, countsFromAuto: countsFromAuto, expectedArch: expectedArch,
+    totalOf: totalOf, checkOpts: checkOpts, parseNum: parseNum, makeRng: makeRng, POTS: POTS, generate: generate, validate: validate,
     makeClass: makeClass, buildFile: buildFile, ovrOf: ovrOf, lum: lum,
     _pools: { HAIR_IDS: HAIR_IDS, FHAIR_BANNED: FHAIR_BANNED, HAIR_LIGHT: HAIR_LIGHT, SKIN_LIGHT: SKIN_LIGHT, SKIN_DARK: SKIN_DARK }
   };

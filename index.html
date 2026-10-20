@@ -125,6 +125,54 @@
     .dlbar .fname { flex: 1 1 auto; min-width: 0; }
     .dl { padding: 13px 14px; font-size: 16px; }
   }
+  .tabs { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; margin-bottom: 18px; }
+  .tabs button { border: 0; background: transparent; padding: 8px 14px; border-radius: 8px; color: var(--muted); font-weight: 600; }
+  .tabs button[aria-selected="true"] { background: var(--bg); color: var(--text); }
+  .tier .tierhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; padding: 4px 10px; font-size: 12px; background: transparent; color: var(--muted); }
+  .seg button.on { background: var(--surface-2); color: var(--text); }
+  .tier .random { display: none; padding-top: 14px; }
+  .tier.is-random .fixed { display: none; }
+  .tier.is-random .random { display: block; }
+  .qinput { font: 800 56px/1 "Barlow Condensed", sans-serif !important; background: transparent !important; border: 0 !important; border-bottom: 2px dashed var(--line) !important; border-radius: 0 !important; padding: 2px 0 !important; width: 100px; flex: none !important; margin: 4px 0 10px; -moz-appearance: textfield; }
+  .qinput::-webkit-outer-spin-button, .qinput::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .qinput:focus { outline: none !important; border-bottom-color: var(--accent) !important; }
+  .rangein { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+  .rangein input { width: 72px; flex: none; text-align: center; font-weight: 600; }
+  .manualgrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 600px) { .manualgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .manualgrid label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); font-weight: 600; }
+  .manualgrid input { width: 100%; font: 700 22px/1 "Barlow Condensed", sans-serif; text-align: center; }
+  .adv { margin-top: 18px; padding: 0; }
+  .adv summary { cursor: pointer; padding: 18px 22px; font: 700 18px/1 "Barlow Condensed", sans-serif; letter-spacing: .08em; text-transform: uppercase; list-style: none; display: flex; justify-content: space-between; }
+  .adv summary::-webkit-details-marker { display: none; }
+  .adv summary::after { content: "+"; color: var(--accent); font-size: 22px; line-height: 18px; }
+  .adv[open] summary::after { content: "–"; }
+  .advbody { padding: 0 22px 22px; }
+  .advhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .advhead h2 { font: 700 20px/1.2 "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; margin: 0 0 4px; }
+  .advhead p { margin: 0 0 14px; }
+  .archgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 28px; margin-bottom: 8px; }
+  @media (max-width: 820px) { .archgrid { grid-template-columns: 1fr; } }
+  .arow { display: grid; grid-template-columns: minmax(0, 1fr) 120px 56px; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .arow .an { font-weight: 600; }
+  .arow .am { font-size: 12px; color: var(--muted); }
+  .arow input[type=number] { padding: 6px; text-align: center; width: 56px; }
+  .rar { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 1px 6px; border-radius: 99px; margin-left: 6px; border: 1px solid var(--line); color: var(--muted); }
+  .rar.common { color: var(--ok); border-color: rgba(60,207,142,.35); }
+  .rar.rare { color: var(--s4); border-color: rgba(78,161,255,.35); }
+  .rar.rarest { color: var(--s45); border-color: rgba(255,138,61,.35); }
+  .crow { display: grid; grid-template-columns: 1.2fr 1.2fr 70px 130px 1.5fr 40px; gap: 8px; margin-bottom: 8px; align-items: center; }
+  @media (max-width: 820px) { .crow { grid-template-columns: 1fr 1fr; } .crow .rm { justify-self: end; } }
+  .crow input, .crow select { width: 100%; min-width: 0; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 10px; font: inherit; }
+  .crow select:focus, .crow input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .rm { padding: 8px 0; width: 40px; color: var(--muted); }
+  .ghost { margin-top: 6px; border-style: dashed; color: var(--muted); }
+  .ghost:hover { color: var(--text); }
+  .notes { display: none; background: rgba(255,200,61,.08); border: 1px solid rgba(255,200,61,.35); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; font-size: 14px; }
+  .notes.show { display: block; }
+  .chip.custom { color: var(--s5); border-color: rgba(255,200,61,.4); }
   .err { color: var(--danger); margin-top: 10px; display: none; }
   footer { color: var(--muted); font-size: 13px; padding: 30px 0 40px; }
   footer code { background: var(--surface-2); padding: 1px 6px; border-radius: 6px; }
@@ -135,30 +183,60 @@
   <header>
     <div class="eyebrow">Hoopland</div>
     <h1>Draft Class Generator</h1>
-    <p class="lede">60 prospects with real-looking faces, gear, archetypes, tendencies and growth curves. Pick how loaded the class is, generate, check the board, download.</p>
+    <p class="lede">Prospects with real-looking faces, gear, archetypes, tendencies and growth curves. Pick how loaded the class is, generate, check the board, download.</p>
   </header>
 
   <section class="card controls" aria-label="Class settings">
     <div>
-      <div class="sliders">
-        <div>
-          <div class="label" id="qlabel">Five-star prospects</div>
-          <div class="qrow">
-            <div class="qnum" id="qnum">5</div>
-            <div class="qtext">0 to 10</div>
-          </div>
-          <input type="range" id="q" min="0" max="10" step="1" value="5" aria-labelledby="qlabel">
-        </div>
-        <div>
-          <div class="label" id="hlabel">4.5-star prospects</div>
-          <div class="qrow">
-            <div class="qnum" id="hnum" style="color:var(--s45)">0</div>
-            <div class="qtext" id="hrange"></div>
-          </div>
-          <input type="range" id="h" min="0" max="40" step="1" value="0" aria-labelledby="hlabel">
-        </div>
+      <div class="tabs" role="tablist" aria-label="How to set star tiers">
+        <button type="button" role="tab" id="tab-auto" aria-selected="true">Auto scaling</button>
+        <button type="button" role="tab" id="tab-manual" aria-selected="false">Set every tier</button>
       </div>
-      <div class="qtext" id="qtext" style="margin-top:14px"></div>
+
+      <div id="pane-auto">
+        <div class="sliders">
+          <div class="tier" data-tier="five">
+            <div class="tierhead"><span class="label" id="l5">5-star prospects</span>
+              <div class="seg" role="group" aria-label="5-star mode"><button type="button" data-mode="fixed">Fixed</button><button type="button" data-mode="random">Random</button></div></div>
+            <div class="fixed">
+              <input class="qinput" type="number" id="q5n" min="0" max="10" inputmode="numeric" aria-labelledby="l5" style="color:var(--s5)">
+              <input type="range" id="q5" min="0" max="10" step="1" aria-labelledby="l5">
+              <div class="hint">0 to 10</div>
+            </div>
+            <div class="random">
+              <div class="rangein">Between <input type="number" id="q5min" min="0" max="10" inputmode="numeric" aria-label="5-star minimum"> and <input type="number" id="q5max" min="0" max="10" inputmode="numeric" aria-label="5-star maximum"></div>
+              <div class="hint">A random count in this range each time you generate.</div>
+            </div>
+          </div>
+          <div class="tier" data-tier="half">
+            <div class="tierhead"><span class="label" id="l45">4.5-star prospects</span>
+              <div class="seg" role="group" aria-label="4.5-star mode"><button type="button" data-mode="fixed">Fixed</button><button type="button" data-mode="random">Random</button></div></div>
+            <div class="fixed">
+              <input class="qinput" type="number" id="h5n" min="0" inputmode="numeric" aria-labelledby="l45" style="color:var(--s45)">
+              <input type="range" id="h5" min="0" step="1" aria-labelledby="l45">
+              <div class="hint" id="hrange"></div>
+            </div>
+            <div class="random">
+              <div class="rangein">Between <input type="number" id="h5min" min="0" inputmode="numeric" aria-label="4.5-star minimum"> and <input type="number" id="h5max" min="0" inputmode="numeric" aria-label="4.5-star maximum"></div>
+              <div class="hint">Capped at however many spots are left after the 5★ and 3.5★ players.</div>
+            </div>
+          </div>
+        </div>
+        <div class="hint" style="margin-top:12px">4★ and 3.5★ fill the rest of the 60 using the scaling.</div>
+      </div>
+
+      <div id="pane-manual" hidden>
+        <div class="manualgrid">
+          <label><span>5★</span><input type="number" min="0" max="150" data-pot="10" inputmode="numeric"></label>
+          <label><span>4.5★</span><input type="number" min="0" max="150" data-pot="9" inputmode="numeric"></label>
+          <label><span>4★</span><input type="number" min="0" max="150" data-pot="8" inputmode="numeric"></label>
+          <label><span>3.5★</span><input type="number" min="0" max="150" data-pot="7" inputmode="numeric"></label>
+          <label><span>3★</span><input type="number" min="0" max="150" data-pot="6" inputmode="numeric"></label>
+        </div>
+        <div class="hint" id="mtotal" style="margin-top:10px"></div>
+      </div>
+
+      <div class="qtext" id="qtext" style="margin-top:16px"></div>
       <div class="tierbar" id="tierbar" aria-hidden="true"></div>
       <div class="legend" id="legend"></div>
     </div>
@@ -173,7 +251,32 @@
     </div>
   </section>
 
+  <details class="card adv" id="adv">
+    <summary>Advanced settings</summary>
+    <div class="advbody">
+      <div class="advhead">
+        <div>
+          <h2>Archetype minimums</h2>
+          <p class="hint">Guarantee at least this many players with a given main archetype. 0 keeps the normal random mix.</p>
+        </div>
+        <button type="button" id="archReset">Reset</button>
+      </div>
+      <div class="archgrid" id="archgrid"></div>
+      <div class="hint" id="archsum"></div>
+
+      <div class="advhead" style="margin-top:28px">
+        <div>
+          <h2>Custom players</h2>
+          <p class="hint">Put your own players in the class. Anything left on Random is rolled like a normal prospect. Looks are always rolled.</p>
+        </div>
+      </div>
+      <div id="customList"></div>
+      <button type="button" id="addCustom" class="ghost">+ Add custom player</button>
+    </div>
+  </details>
+
   <section id="results" aria-label="Generated class">
+    <div class="notes" id="notes" role="status"></div>
     <div class="stats">
       <div class="stat"><div class="v" id="st-top">0</div><div class="k">Top prospect ceiling</div></div>
       <div class="stat"><div class="v" id="st-gear">18</div><div class="k">Wearing gear</div></div>

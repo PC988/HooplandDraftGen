@@ -4,14 +4,27 @@ Generate 60-player Hoopland draft classes that look and play like real prospects
 
 **Use it:** open `index.html`, or the GitHub Pages link once it's set up (see below).
 
-1. Drag the sliders to choose how many 5-star (0 to 10) and 4.5-star prospects are in the class.
+1. Choose how loaded the class is (see **Class makeup** below).
 2. Click **Generate class** and check the draft board.
 3. Rename the file if you want (the name also shows in game), then click **Download**.
 4. In Hoopland, load the `.txt` as a draft class.
 
+Your settings and custom players are remembered in your browser.
+
 Leave the seed empty for a new class every click. Type a seed to rebuild an exact class.
 
-## Class quality
+## Class makeup
+
+**Auto scaling** (default, 60 players): set the number of 5★ and 4.5★ prospects with the slider or by typing it. Switch either one to **Random** and enter a range, and each class rolls a count inside it. 4★ and 3.5★ fill the rest using the scaling below.
+
+**Set every tier:** type exactly how many 5★, 4.5★, 4★, 3.5★ and 3★ prospects you want. The class size is their total (9 to 150).
+
+### Advanced settings
+
+- **Archetype minimums:** guarantee at least a certain number of players with an archetype. 0 keeps the normal mix. Positions stay evenly split by swapping slots; if you ask for more than the positions allow, the page tells you.
+- **Custom players:** add your own players with first name, last name, jersey number, stars and archetype. Anything left on Random is rolled normally, and looks are always rolled. If you pick a star tier that's already full, one spot from the biggest tier is converted, and the page tells you.
+
+## Auto scaling
 
 3.5 stars is the floor. More 5-stars means fewer 3.5-stars.
 
