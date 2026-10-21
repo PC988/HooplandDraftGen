@@ -183,7 +183,7 @@
         '<td class="rank num">' + (i + 1) + "</td>" +
         '<td><div class="who"><span class="face" style="background:#' + a.skinC + ";border-color:#" + a.hairC + '"></span>' +
         '<div><div class="name">' + esc(p.fn + " " + p.ln) + (x.meta.custom ? ' <span class="chip custom">Custom</span>' : "") +
-        '</div><div class="sub">' + esc(p.home) + ", " + p.ctry + "</div></div></div></td>" +
+        '</div><div class="sub">' + p.ctry + "</div></div></div></td>" +
         '<td class="num">' + ht + '<div class="sub">pos ' + p.pos + "</div></td>" +
         '<td class="num">' + p.age + "</td>" +
         '<td class="num ovr">' + curOf(p) + "</td>" +

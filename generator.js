@@ -86,7 +86,8 @@
   var NUM_RARE = [12, 13, 14, 15, 17, 22, 24, 32, 33, 34, 35, 44, 55, 77, 88];
 
   // code, weight, chance of dark skin (overall split lands near 50/50)
-  var COUNTRIES = [["US", 86, 0.52], ["CA", 5, 0.40], ["AU", 3, 0.25], ["FR", 3, 0.50], ["GB", 1, 0.30], ["DE", 1, 0.15], ["RS", 1, 0.05]];
+  // No UK: the game's own saves give no UK city to copy, and an unknown city shows up as Tirana, Albania.
+  var COUNTRIES = [["US", 87, 0.52], ["CA", 5, 0.40], ["AU", 3, 0.25], ["FR", 3, 0.50], ["DE", 1, 0.15], ["RS", 1, 0.05]];
 
   // ------------------------------------------------------ ARCHETYPES ----
   // [posLo, posHi, core, support, weak, tendUp, tendDown, physicalLean, rarityWeight]
@@ -383,7 +384,7 @@
   function checkOpts(opts) {
     var N = totalOf(opts.counts), errs = [];
     if (N < 9) errs.push("A class needs at least 9 players (one per position).");
-    if (N > 150) errs.push("A class can have at most 150 players.");
+    if (N > 150 && !opts.slots) errs.push("A class can have at most 150 players.");
     var mins = 0;
     Object.keys(opts.archMin || {}).forEach(function (a) { mins += opts.archMin[a] || 0; });
     var custom = opts.custom || [];
@@ -432,13 +433,20 @@
     var rng = makeRng(seed), counts = opts.counts, N = totalOf(counts);
     var state = { notes: [], posBroken: false };
     // slots: one per player, with a star tier and a position (equal split across pos 0-8)
-    var pots = [];
-    POTS.forEach(function (p) { for (var k = 0; k < (counts[p] || 0); k++) pots.push(p); });
-    var positions = [];
-    for (var p = 0; p < 9; p++) for (var k = 0; k < Math.floor(N / 9); k++) positions.push(p);
-    positions = positions.concat(rng.sample(range(0, 8), N - positions.length));
-    rng.shuffle(positions);
-    var slots = pots.map(function (pt, i) { return { pot: pt, pos: positions[i], arch: null, custom: null, locked: false }; });
+    var slots;
+    if (opts.slots) {
+      // preset slots (e.g. regenerating an existing league): star tier and position are given per player
+      slots = opts.slots.map(function (s, i) { return { pot: s.pot, pos: s.pos, arch: null, custom: null, locked: false, idx: i }; });
+      state.posBroken = true;
+    } else {
+      var pots = [];
+      POTS.forEach(function (p) { for (var k = 0; k < (counts[p] || 0); k++) pots.push(p); });
+      var positions = [];
+      for (var p = 0; p < 9; p++) for (var k = 0; k < Math.floor(N / 9); k++) positions.push(p);
+      positions = positions.concat(rng.sample(range(0, 8), N - positions.length));
+      rng.shuffle(positions);
+      slots = pots.map(function (pt, i) { return { pot: pt, pos: positions[i], arch: null, custom: null, locked: false, idx: i }; });
+    }
 
     // 1. custom players
     (opts.custom || []).forEach(function (c) {
@@ -504,15 +512,15 @@
       var ctry = c[0], dark = rng.random() < c[2];
       var skin = rng.pick(dark ? SKIN_DARK : SKIN_LIGHT);
       var nm = slot.custom ? [String(slot.custom.fn).trim(), String(slot.custom.ln).trim()] : makeName(rng, ctry, dark, used);
-      var town = rng.choice(DATA.TOWNS[ctry]);
+      var town = rng.choice(DATA.LOCS[ctry]);
       var r = rng.random();
       var num = r < 0.60 ? rng.choice(NUM_VERY_COMMON) : (r < 0.88 ? rng.choice(NUM_COMMON) : rng.choice(NUM_RARE));
       if (slot.custom && parseNum(slot.custom.num) != null) num = parseNum(slot.custom.num);
 
       var pl = clone(TEMPLATE.PLAYER);
       var fields = {
-        id: i + 1, tid: 0, fn: nm[0], ln: nm[1], tag: "", home: town[0], ctry: ctry,
-        loc: { x: Math.round(town[1] * 100), y: Math.round(town[2] * 100) },
+        id: i + 1, tid: 0, fn: nm[0], ln: nm[1], tag: "", home: "", ctry: ctry,  // game fills hometown from loc; a typed home breaks its lookup
+        loc: { x: town[0], y: town[1] },
         age: rng.randint(19, 22), ht: ht, wt: wt, yrs: 0, num: num, gender: 0, pos: pos,
         pri: 11, sec: rng.randint(1, 10),
         arc: arcs.length === 1 ? prim : ADJ[arcs[1]] + " " + prim,
@@ -530,7 +538,7 @@
         shirtC: "FFFFFF", tieC: rng.choice(["C42C36", "10316B", "306943", "141020"]),
         pantC: "1F2937", shoeC: "000000", laceC: "", soleC: "000000"
       }];
-      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom } });
+      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom, slot: slot.idx } });
     }
     function skillSum(pl, idx) { return SKILLS.reduce(function (a, s) { return a + pl.attributes[s][idx]; }, 0); }
     players.sort(function (a, b) {
@@ -613,6 +621,8 @@
       var gap = ko - co;
       if (m.top3) { tops++; if (gap < 7 || gap > 14) bad(p, "top-3 gap " + gap); } else if (gap !== 21) bad(p, "gap " + gap);
       if (p.age < 19 || p.age > 22) bad(p, "age");
+      if (!DATA.LOCS[p.ctry] || !DATA.LOCS[p.ctry].some(function (l) { return l[0] === p.loc.x && l[1] === p.loc.y; })) bad(p, "hometown is not a city the game knows");
+      if (p.home !== "") bad(p, "hometown text must be blank");
       if (!m.custom && ALLOWED_NUMS.indexOf(p.num) < 0) bad(p, "jersey number");
       if (!(p.num >= 0 && p.num <= 100)) bad(p, "jersey out of range");
       if (!fits(m.arcs[0], p.pos)) bad(p, "archetype does not play this position");
