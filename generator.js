@@ -501,7 +501,11 @@
       var w1 = skillWeights(prim), w = w1;
       if (arcs.length > 1) { var w2 = skillWeights(arcs[1]); w = {}; SKILLS.forEach(function (s) { w[s] = 0.6 * w1[s] + 0.4 * w2[s]; }); }
       var capv = distribute(rng, (capOvr - 16) * 2, SKILLS.map(function (s) { return w[s]; }));
-      var gapOvr = top3.indexOf(i) >= 0 ? rng.randint(7, 14) : 21;
+      // starting OVR: ceiling minus 15 to 27 (centred on 21, so most land near it); the 3 best are 7 to 14 below
+      var gapOvr = top3.indexOf(i) >= 0 ? rng.randint(7, 14) : 21 + rng.randint(-3, 3) + rng.randint(-3, 3);
+      // diamonds in the rough: some high-potential prospects start far below their ceiling (28 to 35)
+      var raw = top3.indexOf(i) < 0 && rng.random() < (pot >= 9 ? 0.20 : pot === 8 ? 0.10 : 0);
+      if (raw) gapOvr = rng.randint(28, 35);
       var curv = removePoints(capv, gapOvr * 2);
       var cap = {}, attrs = {};
       SKILLS.forEach(function (s, j) { cap[s] = capv[j]; attrs[s] = [curv[j], capv[j]]; });
@@ -542,7 +546,7 @@
         shirtC: "FFFFFF", tieC: rng.choice(["C42C36", "10316B", "306943", "141020"]),
         pantC: "1F2937", shoeC: "000000", laceC: "", soleC: "000000"
       }];
-      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom, slot: slot.idx } });
+      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom, slot: slot.idx, raw: raw } });
     }
     function skillSum(pl, idx) { return SKILLS.reduce(function (a, s) { return a + pl.attributes[s][idx]; }, 0); }
     players.sort(function (a, b) {
@@ -623,7 +627,7 @@
       if (POTS.indexOf(p.pot) < 0) bad(p, "stars out of range");
       if (ko !== 30 + 7 * p.pot) bad(p, "cap " + ko + " is not the pot " + p.pot + " ceiling");
       var gap = ko - co;
-      if (m.top3) { tops++; if (gap < 7 || gap > 14) bad(p, "top-3 gap " + gap); } else if (gap !== 21) bad(p, "gap " + gap);
+      if (m.top3) { tops++; if (gap < 7 || gap > 14) bad(p, "top-3 gap " + gap); } else if (m.raw ? (gap < 28 || gap > 35 || p.pot < 8) : (gap < 15 || gap > 27)) bad(p, "gap " + gap);
       if (p.age < 19 || p.age > 22) bad(p, "age");
       if (!DATA.LOCS[p.ctry] || !DATA.LOCS[p.ctry].some(function (l) { return l[0] === p.loc.x && l[1] === p.loc.y; })) bad(p, "hometown is not a city the game knows");
       if (p.home !== "") bad(p, "hometown text must be blank");

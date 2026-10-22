@@ -35,7 +35,8 @@ Leave the seed empty for a new class every click. Type a seed to rebuild an exac
 The rest are 4 and 4.5 stars. The 4.5-star slider picks how many of them are 4.5 (it starts at a suggested value and tops out at every non-3.5 player). At 3 five-stars, 80% of the class is 4★ or better.
 
 - **Ceiling OVR:** Hoopland grows every player to his star tier's full ceiling, so that's what the file stores. 5★ = 100, 4.5★ = 93, 4★ = 86, 3.5★ = 79.
-- **Starting OVR** = cap minus 21. The 3 best prospects start 7 to 14 below their cap.
+- **Starting OVR** = ceiling minus 15 to 27, usually close to 21, so players in the same star tier start at different levels (a 4★ starts anywhere from 59 to 71). The 3 best prospects start 7 to 14 below their ceiling.
+- **Diamonds in the rough:** 20% of 4.5★ and 5★ prospects (and 10% of 4★) start 28 to 35 below their ceiling instead. A raw 5★ can start at 65, below a typical 4★, and still grow to 100. The draft board tags them.
 - **Ages** 19 to 22, random.
 
 ## Players
