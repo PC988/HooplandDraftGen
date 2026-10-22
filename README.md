@@ -15,9 +15,9 @@ Leave the seed empty for a new class every click. Type a seed to rebuild an exac
 
 ## Class makeup
 
-**Auto scaling** (default, 60 players): set the number of 5★ and 4.5★ prospects with the slider or by typing it. Switch either one to **Random** and enter a range, and each class rolls a count inside it. 4★ and 3.5★ fill the rest using the scaling below.
+**Auto scaling** (default 60 players; set any class size from 9 to 300, and the 3.5★ count scales with it): set the number of 5★ and 4.5★ prospects with the slider or by typing it. Switch either one to **Random** and enter a range, and each class rolls a count inside it. 4★ and 3.5★ fill the rest using the scaling below.
 
-**Set every tier:** type exactly how many 5★, 4.5★, 4★, 3.5★ and 3★ prospects you want. The class size is their total (9 to 150).
+**Set every tier:** type exactly how many 5★, 4.5★, 4★, 3.5★ and 3★ prospects you want. The class size is their total (9 to 300).
 
 ### Advanced settings
 

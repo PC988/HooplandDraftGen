@@ -17,6 +17,7 @@
   // ---------------------------------------------------------- state ----
   var S = {
     mode: "auto",
+    size: 60,
     five: { mode: "fixed", val: 3, min: 2, max: 5 },
     half: { mode: "fixed", val: null, min: 12, max: 20 },  // val null = follow the scaling default
     manual: G.countsFromAuto(3),
@@ -32,12 +33,14 @@
   var current = null, nameEdited = false, seedEdited = false;
   function clamp(v, lo, hi) { v = parseInt(v, 10); if (!isFinite(v)) v = lo; return Math.max(lo, Math.min(hi, v)); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-  function classSize() { return S.mode === "manual" ? G.totalOf(S.manual) : G.CLASS_SIZE; }
-  function halfVal(q5) { return S.half.val == null ? G.defaultN45(q5) : clamp(S.half.val, 0, G.maxN45(q5)); }
+  function classSize() { return S.mode === "manual" ? G.totalOf(S.manual) : autoSize(); }
+  function autoSize() { return clamp(S.size || G.CLASS_SIZE, 9, G.MAX_SIZE); }
+  function halfVal(q5) { return S.half.val == null ? G.defaultN45(q5, autoSize()) : clamp(S.half.val, 0, G.maxN45(q5, autoSize())); }
 
   // ------------------------------------------------------ tier panel ----
   function syncTierInputs() {
-    var q5 = clamp(S.five.val, 0, 10), mx = G.maxN45(q5);
+    var q5 = clamp(S.five.val, 0, 10), mx = G.maxN45(q5, autoSize());
+    $("csize").value = autoSize(); $("sizehint").textContent = autoSize();
     $("q5").value = q5; $("q5n").value = q5;
     $("q5min").value = S.five.min; $("q5max").value = S.five.max;
     $("h5").max = mx; $("h5n").max = mx;
@@ -62,7 +65,7 @@
     var q5 = S.five.mode === "random" ? Math.round((+S.five.min + +S.five.max) / 2) : clamp(S.five.val, 0, 10);
     q5 = clamp(q5, 0, 10);
     var h = S.half.mode === "random" ? Math.round((+S.half.min + +S.half.max) / 2) : halfVal(q5);
-    return { counts: G.countsFromAuto(q5, clamp(h, 0, G.maxN45(q5))), ranged: S.five.mode === "random" || S.half.mode === "random" };
+    return { counts: G.countsFromAuto(q5, clamp(h, 0, G.maxN45(q5, autoSize())), autoSize()), ranged: S.five.mode === "random" || S.half.mode === "random" };
   }
 
   function renderTiers() {
@@ -75,7 +78,7 @@
     $("legend").innerHTML = TIERS.filter(function (x) { return x.pot !== 6 || c[6]; }).map(function (x) {
       return '<span><i style="background:' + x.color + '"></i>' + x.label + " <b>" + (c[x.pot] || 0) + "</b></span>";
     }).join("") + '<span>Total <b>' + N + "</b></span>";
-    $("mtotal").textContent = "Class size: " + G.totalOf(S.manual) + " players (9 to 150).";
+    $("mtotal").textContent = "Class size: " + G.totalOf(S.manual) + " players (9 to " + G.MAX_SIZE + ").";
     renderArchMax();
   }
 
@@ -205,12 +208,12 @@
       var lo = clamp(Math.min(S.five.min, S.five.max), 0, 10), hi = clamp(Math.max(S.five.min, S.five.max), 0, 10);
       q5 = r.randint(lo, hi); rolled.push(q5 + " five-stars");
     } else q5 = clamp(S.five.val, 0, 10);
-    var mx = G.maxN45(q5), h;
+    var mx = G.maxN45(q5, autoSize()), h;
     if (S.half.mode === "random") {
       var hlo = clamp(Math.min(S.half.min, S.half.max), 0, mx), hhi = clamp(Math.max(S.half.min, S.half.max), 0, mx);
       h = r.randint(hlo, hhi); rolled.push(h + " 4.5-stars");
     } else h = halfVal(q5);
-    return { counts: G.countsFromAuto(q5, h), rolled: rolled.length ? "Rolled " + rolled.join(" and ") + "." : "" };
+    return { counts: G.countsFromAuto(q5, h, autoSize()), rolled: rolled.length ? "Rolled " + rolled.join(" and ") + "." : "" };
   }
   function cleanCustom() {
     return S.custom.filter(function (c) { return (c.fn || "").trim() || (c.ln || "").trim(); }).map(function (c) {
@@ -260,19 +263,20 @@
   });
   ["q5", "q5n"].forEach(function (id) { $(id).addEventListener("input", function () { if ($(id).value !== "") { S.five.val = clamp($(id).value, 0, 10); changed(); } }); });
   ["h5", "h5n"].forEach(function (id) {
-    $(id).addEventListener("input", function () { if ($(id).value !== "") { S.half.val = clamp($(id).value, 0, G.maxN45(clamp(S.five.val, 0, 10))); changed(); } });
+    $(id).addEventListener("input", function () { if ($(id).value !== "") { S.half.val = clamp($(id).value, 0, G.maxN45(clamp(S.five.val, 0, 10), autoSize())); changed(); } });
   });
   [["q5min", "five", "min", 10], ["q5max", "five", "max", 10], ["h5min", "half", "min", 150], ["h5max", "half", "max", 150]].forEach(function (x) {
     $(x[0]).addEventListener("input", function () { if ($(x[0]).value !== "") { S[x[1]][x[2]] = clamp($(x[0]).value, 0, x[3]); save(); renderTiers(); } });
   });
   document.querySelectorAll(".manualgrid input").forEach(function (inp) {
-    inp.addEventListener("input", function () { S.manual[inp.dataset.pot] = clamp(inp.value, 0, 150); save(); renderTiers(); });
+    inp.addEventListener("input", function () { S.manual[inp.dataset.pot] = clamp(inp.value, 0, G.MAX_SIZE); save(); renderTiers(); });
   });
   $("archReset").addEventListener("click", function () { S.archMin = {}; save(); renderArchMax(); });
   $("addCustom").addEventListener("click", function () {
     S.custom.push({ fn: "", ln: "", num: "", pot: null, arch: null }); save(); renderCustom();
     var rows = $("customList").querySelectorAll(".crow"); rows[rows.length - 1].querySelector("input").focus();
   });
+  $("csize").addEventListener("change", function () { S.size = clamp($("csize").value, 9, G.MAX_SIZE); changed(); });
   $("go").addEventListener("click", generate);
   $("seed").addEventListener("input", function () { seedEdited = $("seed").value.trim() !== ""; });
   $("dl").addEventListener("click", download);

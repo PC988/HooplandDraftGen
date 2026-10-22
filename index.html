@@ -140,6 +140,8 @@
   .qinput:focus { outline: none !important; border-bottom-color: var(--accent) !important; }
   .rangein { display: flex; align-items: center; gap: 8px; color: var(--muted); }
   .rangein input { width: 72px; flex: none; text-align: center; font-weight: 600; }
+  .sizerow { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .sizerow input { width: 84px; flex: none; text-align: center; font-weight: 600; }
   .manualgrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
   @media (max-width: 600px) { .manualgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   .manualgrid label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); font-weight: 600; }
@@ -222,16 +224,20 @@
             </div>
           </div>
         </div>
-        <div class="hint" style="margin-top:12px">4★ and 3.5★ fill the rest of the 60 using the scaling.</div>
+        <div class="sizerow">
+          <label class="label" for="csize">Class size</label>
+          <input type="number" id="csize" min="9" max="300" inputmode="numeric">
+          <span class="hint">players (9 to 300). 4★ and 3.5★ fill the rest of the <span id="sizehint">60</span> using the scaling.</span>
+        </div>
       </div>
 
       <div id="pane-manual" hidden>
         <div class="manualgrid">
-          <label><span>5★</span><input type="number" min="0" max="150" data-pot="10" inputmode="numeric"></label>
-          <label><span>4.5★</span><input type="number" min="0" max="150" data-pot="9" inputmode="numeric"></label>
-          <label><span>4★</span><input type="number" min="0" max="150" data-pot="8" inputmode="numeric"></label>
-          <label><span>3.5★</span><input type="number" min="0" max="150" data-pot="7" inputmode="numeric"></label>
-          <label><span>3★</span><input type="number" min="0" max="150" data-pot="6" inputmode="numeric"></label>
+          <label><span>5★</span><input type="number" min="0" max="300" data-pot="10" inputmode="numeric"></label>
+          <label><span>4.5★</span><input type="number" min="0" max="300" data-pot="9" inputmode="numeric"></label>
+          <label><span>4★</span><input type="number" min="0" max="300" data-pot="8" inputmode="numeric"></label>
+          <label><span>3.5★</span><input type="number" min="0" max="300" data-pot="7" inputmode="numeric"></label>
+          <label><span>3★</span><input type="number" min="0" max="300" data-pot="6" inputmode="numeric"></label>
         </div>
         <div class="hint" id="mtotal" style="margin-top:10px"></div>
       </div>

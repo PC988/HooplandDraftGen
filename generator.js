@@ -5,7 +5,7 @@
   var DATA = root.HDG_DATA || (typeof require !== "undefined" ? require("./data.js") : null);
   var TEMPLATE = root.HDG_TEMPLATE || (typeof require !== "undefined" ? require("./template.js") : null);
 
-  var CLASS_SIZE = 60;
+  var CLASS_SIZE = 60, MAX_SIZE = 300;
   var SKILLS = ["LAY", "DNK", "INS", "MID", "TPT", "FTS", "DRB", "PAS", "ORE", "DRE", "STL", "BLK"];
 
   // ------------------------------------------------------------- RNG ----
@@ -177,20 +177,24 @@
   // ---------------------------------------------------------- TIERS ----
   // 3.5 stars is the floor. N35[q] = number of 3.5-star prospects at quality q (at q=3, 80% are 4+ stars).
   var N35 = [18, 16, 14, 12, 10, 9, 7, 6, 5, 4, 3];
+  // Class size defaults to 60; the 3.5-star count scales with it (N35 is per 60 players).
   // 4.5-star count is chosen by the user (slider); it comes out of the 4-star pool.
-  function maxN45(q) { return CLASS_SIZE - q - N35[q]; }
-  function defaultN45(q) { return Math.round(maxN45(q) * (0.30 + 0.02 * q)); }
-  function classTiers(q, n45) {
-    var n35 = N35[q], rest = maxN45(q);
-    if (n45 == null || isNaN(n45)) n45 = defaultN45(q);
+  function sz(size) { return size == null || isNaN(size) ? CLASS_SIZE : Math.max(9, Math.min(MAX_SIZE, Math.round(size))); }
+  function n35Of(q, size) { size = sz(size); return Math.max(0, Math.min(size - q, Math.round(N35[q] * size / CLASS_SIZE))); }
+  function maxN45(q, size) { size = sz(size); return Math.max(0, size - q - n35Of(q, size)); }
+  function defaultN45(q, size) { return Math.round(maxN45(q, size) * (0.30 + 0.02 * q)); }
+  function classTiers(q, n45, size) {
+    size = sz(size); q = Math.min(q, size);
+    var n35 = n35Of(q, size), rest = maxN45(q, size);
+    if (n45 == null || isNaN(n45)) n45 = defaultN45(q, size);
     n45 = Math.max(0, Math.min(rest, Math.round(n45)));
     var n4 = rest - n45, pots = [];
     function add(p, n) { for (var i = 0; i < n; i++) pots.push(p); }
     add(10, q); add(9, n45); add(8, n4); add(7, n35);
     return pots;
   }
-  function tierSummary(q, n45) {
-    var p = classTiers(q, n45), c = { 10: 0, 9: 0, 8: 0, 7: 0 };
+  function tierSummary(q, n45, size) {
+    var p = classTiers(q, n45, size), c = { 10: 0, 9: 0, 8: 0, 7: 0 };
     p.forEach(function (x) { c[x]++; });
     return c;
   }
@@ -355,8 +359,8 @@
   // }
   var POTS = [10, 9, 8, 7, 6];
   function starLabel(pot) { return (pot / 2) + "★"; }
-  function countsFromAuto(q5, n45) {
-    var t = classTiers(q5, n45), c = { 10: 0, 9: 0, 8: 0, 7: 0, 6: 0 };
+  function countsFromAuto(q5, n45, size) {
+    var t = classTiers(q5, n45, size), c = { 10: 0, 9: 0, 8: 0, 7: 0, 6: 0 };
     t.forEach(function (p) { c[p]++; });
     return c;
   }
@@ -384,7 +388,7 @@
   function checkOpts(opts) {
     var N = totalOf(opts.counts), errs = [];
     if (N < 9) errs.push("A class needs at least 9 players (one per position).");
-    if (N > 150 && !opts.slots) errs.push("A class can have at most 150 players.");
+    if (N > MAX_SIZE && !opts.slots) errs.push("A class can have at most " + MAX_SIZE + " players.");
     var mins = 0;
     Object.keys(opts.archMin || {}).forEach(function (a) { mins += opts.archMin[a] || 0; });
     var custom = opts.custom || [];
@@ -676,7 +680,7 @@
   }
 
   var API = {
-    CLASS_SIZE: CLASS_SIZE, SKILLS: SKILLS, BADGE_NAMES: BADGE_NAMES, ARCH: ARCH,
+    CLASS_SIZE: CLASS_SIZE, MAX_SIZE: MAX_SIZE, SKILLS: SKILLS, BADGE_NAMES: BADGE_NAMES, ARCH: ARCH,
     classTiers: classTiers, tierSummary: tierSummary, maxN45: maxN45, defaultN45: defaultN45, countsFromAuto: countsFromAuto, expectedArch: expectedArch,
     totalOf: totalOf, checkOpts: checkOpts, parseNum: parseNum, makeRng: makeRng, POTS: POTS, generate: generate, validate: validate,
     makeClass: makeClass, buildFile: buildFile, ovrOf: ovrOf, lum: lum,
