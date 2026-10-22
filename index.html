@@ -174,6 +174,9 @@
   .ghost:hover { color: var(--text); }
   .notes { display: none; background: rgba(255,200,61,.08); border: 1px solid rgba(255,200,61,.35); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; font-size: 14px; }
   .notes.show { display: block; }
+  .sorth { display: flex; flex-direction: column; gap: 4px; }
+  select.sort { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 2px 4px; font: 500 11px/1.4 Inter, system-ui, sans-serif; text-transform: none; letter-spacing: 0; cursor: pointer; }
+  select.sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .chip.raw { color: #7fd3ff; border-color: rgba(127,211,255,.4); }
   .chip.custom { color: var(--s5); border-color: rgba(255,200,61,.4); }
   .err { color: var(--danger); margin-top: 10px; display: none; }
@@ -293,7 +296,7 @@
     <div class="tablewrap">
       <table>
         <thead><tr>
-          <th>#</th><th>Prospect</th><th>Pos</th><th>Age</th><th>OVR</th><th>Ceiling</th><th>Potential</th><th>No.</th><th>Archetype</th><th>Gear &amp; badges</th>
+          <th>#</th><th>Prospect</th><th>Pos</th><th><div class="sorth">Age<select class="sort" data-key="age" aria-label="Sort by Age"><option value="">Board</option><option value="asc">Low → High</option><option value="desc">High → Low</option></select></div></th><th><div class="sorth">OVR<select class="sort" data-key="ovr" aria-label="Sort by OVR"><option value="">Board</option><option value="asc">Low → High</option><option value="desc">High → Low</option></select></div></th><th><div class="sorth">Ceiling<select class="sort" data-key="cap" aria-label="Sort by Ceiling"><option value="">Board</option><option value="asc">Low → High</option><option value="desc">High → Low</option></select></div></th><th>Potential</th><th>No.</th><th>Archetype</th><th>Gear &amp; badges</th>
         </tr></thead>
         <tbody id="rows"></tbody>
       </table>

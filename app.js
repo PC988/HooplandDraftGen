@@ -31,6 +31,7 @@
   function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 
   var current = null, nameEdited = false, seedEdited = false;
+  var sortBy = { key: "", dir: "" };
   function clamp(v, lo, hi) { v = parseInt(v, 10); if (!isFinite(v)) v = lo; return Math.max(lo, Math.min(hi, v)); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function classSize() { return S.mode === "manual" ? G.totalOf(S.manual) : autoSize(); }
@@ -179,7 +180,16 @@
     var mx = Math.max.apply(null, pc);
     $("st-pos").innerHTML = pc.map(function (n, i) { return '<div title="pos ' + i + ": " + n + '" style="height:' + (n / mx * 100) + '%"></div>'; }).join("");
     $("st-pos-k").textContent = "Positions 0 to 8: " + pc.join(" / ");
-    $("rows").innerHTML = ps.map(function (x, i) {
+    // display order: draft board order unless a column sort is picked (the downloaded file keeps board order)
+    var rank = new Map(ps.map(function (x, i) { return [x, i + 1]; }));
+    var view = ps.slice();
+    if (sortBy.key) {
+      var val = { age: function (p) { return p.age; }, ovr: curOf, cap: capOf }[sortBy.key];
+      var dir = sortBy.dir === "asc" ? 1 : -1;
+      view.sort(function (a, b) { return (val(a.player) - val(b.player)) * dir || rank.get(a) - rank.get(b); });
+    }
+    $("rows").innerHTML = view.map(function (x) {
+      var i = rank.get(x) - 1;
       var p = x.player, a = p.appearance, ht = Math.floor(p.ht / 12) + "'" + (p.ht % 12) + '"';
       var badges = p.skills.map(function (s) { return '<span class="chip">' + esc(G.BADGE_NAMES[s.id] || s.id) + "</span>"; }).join("");
       return "<tr>" +
@@ -277,6 +287,13 @@
     var rows = $("customList").querySelectorAll(".crow"); rows[rows.length - 1].querySelector("input").focus();
   });
   $("csize").addEventListener("change", function () { S.size = clamp($("csize").value, 9, G.MAX_SIZE); changed(); });
+  document.querySelectorAll("select.sort").forEach(function (sel) {
+    sel.addEventListener("change", function () {
+      document.querySelectorAll("select.sort").forEach(function (o) { if (o !== sel) o.value = ""; });
+      sortBy = sel.value ? { key: sel.dataset.key, dir: sel.value } : { key: "", dir: "" };
+      if (current) renderClass(current);
+    });
+  });
   $("go").addEventListener("click", generate);
   $("seed").addEventListener("input", function () { seedEdited = $("seed").value.trim() !== ""; });
   $("dl").addEventListener("click", download);

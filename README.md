@@ -5,7 +5,7 @@ Generate 60-player Hoopland draft classes that look and play like real prospects
 **Use it:** open `index.html`, or the GitHub Pages link once it's set up (see below).
 
 1. Choose how loaded the class is (see **Class makeup** below).
-2. Click **Generate class** and check the draft board.
+2. Click **Generate class** and check the draft board. The Age, OVR and Ceiling columns each have a dropdown to sort low to high or high to low.
 3. Rename the file if you want (the name also shows in game), then click **Download**.
 4. In Hoopland, load the `.txt` as a draft class.
 
