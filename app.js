@@ -12,6 +12,7 @@
     { pot: 7, label: "3.5★", color: "var(--s35)" },
     { pot: 6, label: "3★", color: "#4a5160" }
   ];
+  var POS = ["PG", "G", "SG", "GF", "SF", "F", "PF", "FC", "C"];  // Hoopland pos 0 to 8
   var STAR_OPTS = [["", "Random ★"], ["10", "5★"], ["9", "4.5★"], ["8", "4★"], ["7", "3.5★"], ["6", "3★"]];
 
   // ---------------------------------------------------------- state ----
@@ -181,8 +182,8 @@
     $("st-badge").textContent = ps.filter(function (x) { return x.player.skills.length; }).length;
     var pc = new Array(9).fill(0); ps.forEach(function (x) { pc[x.player.pos]++; });
     var mx = Math.max.apply(null, pc);
-    $("st-pos").innerHTML = pc.map(function (n, i) { return '<div title="pos ' + i + ": " + n + '" style="height:' + (n / mx * 100) + '%"></div>'; }).join("");
-    $("st-pos-k").textContent = "Positions 0 to 8: " + pc.join(" / ");
+    $("st-pos").innerHTML = pc.map(function (n, i) { return '<div title="' + POS[i] + ": " + n + '" style="height:' + (n / mx * 100) + '%"></div>'; }).join("");
+    $("st-pos-k").textContent = pc.map(function (n, i) { return POS[i] + " " + n; }).join(" · ");
     // display order: draft board order unless a column sort is picked (the downloaded file keeps board order)
     var rank = new Map(ps.map(function (x, i) { return [x, i + 1]; }));
     var view = ps.slice();
@@ -200,7 +201,7 @@
         '<td><div class="who"><span class="face" style="background:#' + a.skinC + ";border-color:#" + a.hairC + '"></span>' +
         '<div><div class="name">' + esc(p.fn + " " + p.ln) + (x.meta.custom ? ' <span class="chip custom">Custom</span>' : "") + (x.meta.raw ? ' <span class="chip raw" title="High potential, starts far below his ceiling">Diamond in the rough</span>' : "") +
         '</div><div class="sub">' + p.ctry + "</div></div></div></td>" +
-        '<td class="num">' + ht + '<div class="sub">pos ' + p.pos + "</div></td>" +
+        '<td class="num">' + ht + '<div class="sub">' + POS[p.pos] + "</div></td>" +
         '<td class="num">' + p.age + "</td>" +
         '<td class="num ovr">' + curOf(p) + "</td>" +
         '<td class="num cap">' + capOf(p) + "</td>" +

@@ -44,7 +44,7 @@ The rest are 4 and 4.5 stars. The 4.5-star slider picks how many of them are 4.5
 
 ## Players
 
-- **Positions:** an equal split across pos 0 to 8 (6 or 7 each). Height follows position.
+- **Positions:** an equal split across the 9 Hoopland positions, PG, G, SG, GF, SF, F, PF, FC and C (6 or 7 each in a 60-player class). Height follows position.
 - **Archetypes:**
   - Common: 3-and-D, Post Scorer, Rim Protector, Slasher, Shot Creator.
   - Rare: Point Forward, Playmaker, Rim Runner, Glass Cleaner, Defensive Specialist.
