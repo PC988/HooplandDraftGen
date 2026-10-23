@@ -20,6 +20,7 @@
     mode: "auto",
     size: 60,
     ages: "draft",
+    showCounts: false,
     five: { mode: "fixed", val: 3, min: 2, max: 5 },
     half: { mode: "fixed", val: null, min: 12, max: 20 },  // val null = follow the scaling default
     manual: G.countsFromAuto(3),
@@ -173,7 +174,7 @@
     var capOf = function (p) { return G.ovrOf(SK.map(function (s) { return p.attributes[s][1]; })); };
     var curOf = function (p) { return G.ovrOf(SK.map(function (s) { return p.attributes[s][0]; })); };
     var notes = [];
-    if (c.rolled) notes.push(c.rolled);
+    if (c.rolled && S.showCounts) notes.push(c.rolled);
     notes = notes.concat(c.notes || []);
     $("notes").innerHTML = notes.map(esc).join("<br>");
     $("notes").classList.toggle("show", notes.length > 0);
@@ -234,7 +235,8 @@
       return { fn: (c.fn || "").trim(), ln: (c.ln || "").trim(), num: c.num || null, pot: c.pot || null, arch: c.arch || null };
     });
   }
-  function defaultName() { return "Draft Class " + current.counts[10] + "x5 " + current.counts[9] + "x4.5 #" + current.seed; }
+  // star counts stay hidden (file name and "Rolled ..." note) unless "Show star counts" is ticked
+  function defaultName() { return "Draft Class " + (S.showCounts ? current.counts[10] + "x5 " + current.counts[9] + "x4.5 " : "") + "#" + current.seed; }
   function cleanName(s) { return s.replace(/\.txt$/i, "").replace(/[\\/:*?"<>|]+/g, "").trim(); }
 
   function generate() {
@@ -299,6 +301,11 @@
     });
   });
   document.querySelectorAll("#ageseg button").forEach(function (b) { b.addEventListener("click", function () { S.ages = b.dataset.ages; changed(); }); });
+  $("showcounts").checked = !!S.showCounts;
+  $("showcounts").addEventListener("change", function () {
+    S.showCounts = $("showcounts").checked; save();
+    if (current) { if (!nameEdited) $("fname").value = defaultName(); renderClass(current); }
+  });
   $("go").addEventListener("click", generate);
   $("seed").addEventListener("input", function () { seedEdited = $("seed").value.trim() !== ""; });
   $("dl").addEventListener("click", download);

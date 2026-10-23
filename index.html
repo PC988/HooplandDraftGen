@@ -121,7 +121,7 @@
   .dl { background: var(--ok); color: #04170e; border-color: transparent; font: 800 18px/1 "Barlow Condensed", sans-serif; letter-spacing: .08em; text-transform: uppercase; padding: 14px 20px; }
   @media (max-width: 600px) {
     .dlbar .card { flex-wrap: nowrap; padding: 10px; gap: 8px; }
-    .dlbar .label { display: none; }
+    .dlbar .label, .showc { display: none; }
     .dlbar .fname { flex: 1 1 auto; min-width: 0; }
     .dl { padding: 13px 14px; font-size: 16px; }
   }
@@ -176,6 +176,8 @@
   .notes.show { display: block; }
   .ageseg { display: flex; width: 100%; }
   .ageseg button { flex: 1; padding: 9px 6px; font-size: 13px; }
+  .showc { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); white-space: nowrap; cursor: pointer; }
+  .showc input { accent-color: var(--accent); width: 16px; height: 16px; }
   .sorth { display: flex; flex-direction: column; gap: 4px; }
   select.sort { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 2px 4px; font: 500 11px/1.4 Inter, system-ui, sans-serif; text-transform: none; letter-spacing: 0; cursor: pointer; }
   select.sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -315,6 +317,7 @@
       <div class="card">
         <label class="label" for="fname" style="flex:0 0 auto">File name</label>
         <div class="fname"><input type="text" id="fname" spellcheck="false"><span class="ext">.txt</span></div>
+        <label class="showc" title="Put the 5★ and 4.5★ counts in the file name and show the rolled counts"><input type="checkbox" id="showcounts"> Show star counts</label>
         <button class="dl" id="dl" type="button">Download</button>
       </div>
     </div>
