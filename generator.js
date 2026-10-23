@@ -174,6 +174,15 @@
     };
   }
 
+  // ----------------------------------------------------------- AGES ----
+  // draft: 19 to 22. fresh18: every freshman is 18. freshDynamic: mostly 18, 17 is very rare, some 19 to 20, a few 21, never older.
+  var AGE_RANGE = { draft: [19, 22], fresh18: [18, 18], freshDynamic: [17, 21] };
+  function rollAge(rng, mode) {
+    if (mode === "fresh18") return 18;
+    if (mode === "freshDynamic") return rng.pick([[17, 3], [18, 62], [19, 24], [20, 9], [21, 2]]);
+    return rng.randint(19, 22);
+  }
+
   // ---------------------------------------------------------- TIERS ----
   // 3.5 stars is the floor. N35[q] = number of 3.5-star prospects at quality q (at q=3, 80% are 4+ stars).
   var N35 = [18, 16, 14, 12, 10, 9, 7, 6, 5, 4, 3];
@@ -529,7 +538,7 @@
       var fields = {
         id: i + 1, tid: 0, fn: nm[0], ln: nm[1], tag: "", home: "", ctry: ctry,  // game fills hometown from loc; a typed home breaks its lookup
         loc: { x: town[0], y: town[1] },
-        age: rng.randint(19, 22), ht: ht, wt: wt, yrs: 0, num: num, gender: 0, pos: pos,
+        age: rollAge(rng, opts.ages), ht: ht, wt: wt, yrs: 0, num: num, gender: 0, pos: pos,
         pri: 11, sec: rng.randint(1, 10),
         arc: arcs.length === 1 ? prim : ADJ[arcs[1]] + " " + prim,
         pot: pot, regressionAge: rng.choice([31, 32, 33, 33, 34, 34, 34, 35, 35, 36, 37]),
@@ -628,7 +637,8 @@
       if (ko !== 30 + 7 * p.pot) bad(p, "cap " + ko + " is not the pot " + p.pot + " ceiling");
       var gap = ko - co;
       if (m.top3) { tops++; if (gap < 7 || gap > 14) bad(p, "top-3 gap " + gap); } else if (m.raw ? (gap < 28 || gap > 35 || p.pot < 8) : (gap < 15 || gap > 27)) bad(p, "gap " + gap);
-      if (p.age < 19 || p.age > 22) bad(p, "age");
+      var ar = AGE_RANGE[opts.ages] || AGE_RANGE.draft;
+      if (p.age < ar[0] || p.age > ar[1]) bad(p, "age " + p.age);
       if (!DATA.LOCS[p.ctry] || !DATA.LOCS[p.ctry].some(function (l) { return l[0] === p.loc.x && l[1] === p.loc.y; })) bad(p, "hometown is not a city the game knows");
       if (p.home !== "") bad(p, "hometown text must be blank");
       if (!m.custom && ALLOWED_NUMS.indexOf(p.num) < 0) bad(p, "jersey number");
@@ -684,7 +694,7 @@
   }
 
   var API = {
-    CLASS_SIZE: CLASS_SIZE, MAX_SIZE: MAX_SIZE, SKILLS: SKILLS, BADGE_NAMES: BADGE_NAMES, ARCH: ARCH,
+    CLASS_SIZE: CLASS_SIZE, MAX_SIZE: MAX_SIZE, AGE_RANGE: AGE_RANGE, SKILLS: SKILLS, BADGE_NAMES: BADGE_NAMES, ARCH: ARCH,
     classTiers: classTiers, tierSummary: tierSummary, maxN45: maxN45, defaultN45: defaultN45, countsFromAuto: countsFromAuto, expectedArch: expectedArch,
     totalOf: totalOf, checkOpts: checkOpts, parseNum: parseNum, makeRng: makeRng, POTS: POTS, generate: generate, validate: validate,
     makeClass: makeClass, buildFile: buildFile, ovrOf: ovrOf, lum: lum,

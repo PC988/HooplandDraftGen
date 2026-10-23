@@ -18,6 +18,7 @@
   var S = {
     mode: "auto",
     size: 60,
+    ages: "draft",
     five: { mode: "fixed", val: 3, min: 2, max: 5 },
     half: { mode: "fixed", val: null, min: 12, max: 20 },  // val null = follow the scaling default
     manual: G.countsFromAuto(3),
@@ -54,6 +55,8 @@
       el.querySelectorAll(".seg button").forEach(function (b) { b.classList.toggle("on", b.dataset.mode === t.mode); });
     });
     document.querySelectorAll(".manualgrid input").forEach(function (inp) { inp.value = S.manual[inp.dataset.pot] || 0; });
+    document.querySelectorAll("#ageseg button").forEach(function (b) { b.classList.toggle("on", b.dataset.ages === (S.ages || "draft")); b.setAttribute("aria-pressed", b.dataset.ages === (S.ages || "draft")); });
+    $("agehint").textContent = { draft: "Draft prospects: 19 to 22.", fresh18: "Every freshman enters college at 18.", freshDynamic: "Mostly 18. Some 19 to 20, a few 21, and 17 is very rare. Nobody over 21." }[S.ages || "draft"];
     $("tab-auto").setAttribute("aria-selected", S.mode === "auto");
     $("tab-manual").setAttribute("aria-selected", S.mode === "manual");
     $("pane-auto").hidden = S.mode !== "auto";
@@ -239,7 +242,7 @@
     if (!isFinite(seed)) seed = Math.floor(Math.random() * 1e6) + 1;
     try {
       var rc = resolveCounts(seed);
-      var opts = { counts: rc.counts, archMin: Object.assign({}, S.archMin), custom: cleanCustom() };
+      var opts = { counts: rc.counts, archMin: Object.assign({}, S.archMin), custom: cleanCustom(), ages: S.ages || "draft" };
       var res = G.makeClass(opts, seed);
       current = { seed: res.seed, players: res.players, counts: res.counts, notes: res.notes, rolled: rc.rolled };
       $("seed").value = res.seed; seedEdited = false;
@@ -294,6 +297,7 @@
       if (current) renderClass(current);
     });
   });
+  document.querySelectorAll("#ageseg button").forEach(function (b) { b.addEventListener("click", function () { S.ages = b.dataset.ages; changed(); }); });
   $("go").addEventListener("click", generate);
   $("seed").addEventListener("input", function () { seedEdited = $("seed").value.trim() !== ""; });
   $("dl").addEventListener("click", download);
