@@ -219,10 +219,13 @@
   function fits(a, pos) { return ARCH[a][0] <= pos && pos <= ARCH[a][1]; }
 
   // Split `total` points over slots in [lo, hi], proportional to weights.
-  function distribute(rng, total, weights, lo, hi) {
-    lo = lo == null ? 1 : lo; hi = hi == null ? 20 : hi;
-    var n = weights.length, room = hi - lo, i;
-    var w = weights.map(function (x) { return x * rng.uniform(0.8, 1.2); });
+  // Split `total` points over slots in [lo, hi[i]], proportional to weights after a random roll of +/-`jit`.
+  // hi can be one number or a per-slot array (used to give core skills their own 16-20 ceiling).
+  function distribute(rng, total, weights, lo, hi, jit) {
+    lo = lo == null ? 1 : lo; jit = jit == null ? 0.2 : jit;
+    var n = weights.length, i;
+    var room = weights.map(function (_, j) { return (Array.isArray(hi) ? hi[j] : (hi == null ? 20 : hi)) - lo; });
+    var w = weights.map(function (x) { return x * rng.uniform(1 - jit, 1 + jit); });
     var vals = new Array(n).fill(0), free = range(0, n - 1), remaining = total - lo * n;
     while (free.length && remaining > 1e-9) {
       var sw = free.reduce(function (a, j) { return a + w[j]; }, 0);
@@ -230,15 +233,43 @@
       remaining = 0;
       var keep = [];
       free.forEach(function (j) {
-        if (vals[j] > room) { remaining += vals[j] - room; vals[j] = room; } else keep.push(j);
+        if (vals[j] > room[j]) { remaining += vals[j] - room[j]; vals[j] = room[j]; } else keep.push(j);
       });
       free = keep;
     }
     var ints = vals.map(function (v) { return Math.floor(v + 1e-9); });
     var short = (total - lo * n) - ints.reduce(function (a, b) { return a + b; }, 0);
     var order = range(0, n - 1).sort(function (a, b) { return (vals[b] - ints[b]) - (vals[a] - ints[a]); });
-    for (var k = 0; short > 0; k++) { i = order[k % n]; if (ints[i] < room) { ints[i]++; short--; } }
+    for (var k = 0; short > 0 && k < n * 40; k++) { i = order[k % n]; if (ints[i] < room[i]) { ints[i]++; short--; } }
     return ints.map(function (v) { return v + lo; });
+  }
+
+  // Skill families for the random bonus / weak spot. A bonus lifts a whole family a little (e.g. "Rebounding"
+  // lifts both ORE and DRE slightly) rather than spiking one skill.
+  var FAMILIES = {
+    "Finishing": ["LAY", "DNK", "INS"], "Shooting": ["MID", "TPT", "FTS"], "Creating": ["DRB", "PAS"],
+    "Rebounding": ["ORE", "DRE"], "Defense": ["STL", "BLK"]
+  };
+  var BONUS_LIFT = 1.3, WEAK_CUT = 0.5;
+  // Give each player his own shape: core skills top out at 16-20, one bonus family, one weak spot, wider roll.
+  function buildSkills(rng, total, w) {
+    var core = SKILLS.filter(function (s) { return w[s] >= 2.4; });
+    var fams = Object.keys(FAMILIES).filter(function (f) {
+      return !FAMILIES[f].some(function (s) { return core.indexOf(s) >= 0; });
+    });
+    var bonus = fams.length ? rng.choice(fams) : null;
+    var weakPool = SKILLS.filter(function (s) { return core.indexOf(s) < 0 && (!bonus || FAMILIES[bonus].indexOf(s) < 0); });
+    var weak = rng.choice(weakPool);
+    var ww = {};
+    SKILLS.forEach(function (s) {
+      ww[s] = w[s] * (bonus && FAMILIES[bonus].indexOf(s) >= 0 ? BONUS_LIFT : 1) * (s === weak ? WEAK_CUT : 1);
+    });
+    // ceilings: core 16-20, support 14-19, everything else 12-17, so spare points can't pile into one off-skill
+    var hi = SKILLS.map(function (s) {
+      return core.indexOf(s) >= 0 ? rng.randint(16, 20) : w[s] >= 1.6 ? rng.randint(14, 19) : rng.randint(12, 17);
+    });
+    if (hi.reduce(function (a, b) { return a + b; }, 0) < total) hi = SKILLS.map(function () { return 20; });
+    return { capv: distribute(rng, total, SKILLS.map(function (s) { return ww[s]; }), 1, hi, 0.4), bonus: bonus, weak: weak };
   }
 
   // Take `gap` points off proportionally to each cap.
@@ -509,7 +540,7 @@
       }
       var w1 = skillWeights(prim), w = w1;
       if (arcs.length > 1) { var w2 = skillWeights(arcs[1]); w = {}; SKILLS.forEach(function (s) { w[s] = 0.6 * w1[s] + 0.4 * w2[s]; }); }
-      var capv = distribute(rng, (capOvr - 16) * 2, SKILLS.map(function (s) { return w[s]; }));
+      var built = buildSkills(rng, (capOvr - 16) * 2, w), capv = built.capv;
       // starting OVR: ceiling minus 15 to 27 (centred on 21, so most land near it); the 3 best are 7 to 14 below
       var gapOvr = top3.indexOf(i) >= 0 ? rng.randint(7, 14) : 21 + rng.randint(-3, 3) + rng.randint(-3, 3);
       // diamonds in the rough: some high-potential prospects start far below their ceiling (28 to 35)
@@ -555,7 +586,7 @@
         shirtC: "FFFFFF", tieC: rng.choice(["C42C36", "10316B", "306943", "141020"]),
         pantC: "1F2937", shoeC: "000000", laceC: "", soleC: "000000"
       }];
-      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom, slot: slot.idx, raw: raw } });
+      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom, slot: slot.idx, raw: raw, bonus: built.bonus, weak: built.weak } });
     }
     function skillSum(pl, idx) { return SKILLS.reduce(function (a, s) { return a + pl.attributes[s][idx]; }, 0); }
     players.sort(function (a, b) {
@@ -694,7 +725,7 @@
   }
 
   var API = {
-    CLASS_SIZE: CLASS_SIZE, MAX_SIZE: MAX_SIZE, AGE_RANGE: AGE_RANGE, SKILLS: SKILLS, BADGE_NAMES: BADGE_NAMES, ARCH: ARCH,
+    CLASS_SIZE: CLASS_SIZE, MAX_SIZE: MAX_SIZE, FAMILIES: FAMILIES, AGE_RANGE: AGE_RANGE, SKILLS: SKILLS, BADGE_NAMES: BADGE_NAMES, ARCH: ARCH,
     classTiers: classTiers, tierSummary: tierSummary, maxN45: maxN45, defaultN45: defaultN45, countsFromAuto: countsFromAuto, expectedArch: expectedArch,
     totalOf: totalOf, checkOpts: checkOpts, parseNum: parseNum, makeRng: makeRng, POTS: POTS, generate: generate, validate: validate,
     makeClass: makeClass, buildFile: buildFile, ovrOf: ovrOf, lum: lum,

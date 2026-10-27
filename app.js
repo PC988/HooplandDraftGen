@@ -12,6 +12,7 @@
     { pot: 7, label: "3.5★", color: "var(--s35)" },
     { pot: 6, label: "3★", color: "#4a5160" }
   ];
+  var SKILL_NAMES = { LAY: "layup", DNK: "dunk", INS: "inside", MID: "mid-range", TPT: "3PT", FTS: "free throw", DRB: "dribble", PAS: "passing", ORE: "off. rebound", DRE: "def. rebound", STL: "steal", BLK: "block" };
   var POS = ["PG", "G", "SG", "GF", "SF", "F", "PF", "FC", "C"];  // Hoopland pos 0 to 8
   var STAR_OPTS = [["", "Random ★"], ["10", "5★"], ["9", "4.5★"], ["8", "4★"], ["7", "3.5★"], ["6", "3★"]];
 
@@ -208,7 +209,7 @@
         '<td class="num cap">' + capOf(p) + "</td>" +
         "<td>" + stars(p.pot) + "</td>" +
         '<td class="num">#' + (p.num === 100 ? "00" : p.num) + "</td>" +
-        '<td class="arc">' + esc(p.arc) + "</td>" +
+        '<td class="arc">' + esc(p.arc) + (x.meta.bonus || x.meta.weak ? '<div class="sub">' + (x.meta.bonus ? "+" + esc(x.meta.bonus) : "") + (x.meta.bonus && x.meta.weak ? " · " : "") + (x.meta.weak ? "weak " + (SKILL_NAMES[x.meta.weak] || x.meta.weak) : "") + "</div>" : "") + "</td>" +
         "<td>" + gearChip(p) + badges + "</td></tr>";
     }).join("");
     $("results").classList.add("show");

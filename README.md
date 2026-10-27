@@ -50,7 +50,11 @@ The rest are 4 and 4.5 stars. The 4.5-star slider picks how many of them are 4.5
   - Rare: Point Forward, Playmaker, Rim Runner, Glass Cleaner, Defensive Specialist.
   - Rarest: Sharpshooter, Stretch Big.
   - 4.5 to 5★ prospects blend in a second archetype, for example "Sharpshooting Shot Creator".
-- **Skills:** split across the 12 attributes by archetype (core, support, weak).
+- **Skills:** split across the 12 attributes by archetype (core, support, weak), with a ±40% roll on each so no two players match.
+  - **Core skills top out at 16 to 20**, so two 3-and-Ds don't both end at 20 steals and 20 3PT. Support skills top out at 14 to 19, everything else at 12 to 17.
+  - **Bonus family:** each player gets a small lift to one skill family outside his core: Finishing, Shooting, Creating, Rebounding or Defense. It lifts the whole family a little (Rebounding raises both offensive and defensive rebounding by 2 or 3), never one skill a lot.
+  - **Weak spot:** one non-core skill is cut roughly in half.
+  - The draft board shows both under the archetype, for example "+Rebounding · weak passing".
 - **Tendencies:** follow the archetype, but a player can't lean hard into a shot he can't make.
 - **Badges:** rare. Spark Plug is the most common, then Clamps and Dimer. Limitless goes only to 4.5★+ shooters.
 - **Countries:** 87% US, 5% CA, 3% AU, 3% FR, 1% each DE, RS. Names come from each country. US hometowns are a random state, using one game-made city per state; other countries use exact city coordinates the game itself uses (any other coordinate makes Hoopland fall back to Tirana, Albania).
