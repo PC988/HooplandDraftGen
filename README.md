@@ -40,7 +40,7 @@ The rest are 4 and 4.5 stars. The 4.5-star slider picks how many of them are 4.5
 - **Ages:** pick one next to the Generate button.
   - **Draft 19–22** (default): random 19 to 22.
   - **Freshmen: all 18**: every player enters college at 18.
-  - **Freshmen: dynamic**: 18 for most (62%), 19 (24%), 20 (9%), 21 (2%), and 17 is very rare (3%). Nobody is over 21.
+  - **Freshmen: dynamic**: 18 (70%), 19 (29%), 17 (1%). Nobody is over 19.
 
 ## Players
 
@@ -51,7 +51,9 @@ The rest are 4 and 4.5 stars. The 4.5-star slider picks how many of them are 4.5
   - Rarest: Sharpshooter, Stretch Big.
   - 4.5 to 5★ prospects blend in a second archetype, for example "Sharpshooting Shot Creator".
 - **Skills:** split across the 12 attributes by archetype (core, support, weak), with a ±40% roll on each so no two players match.
-  - **Core skills top out at 16 to 20**, so two 3-and-Ds don't both end at 20 steals and 20 3PT. Support skills top out at 14 to 19, everything else at 12 to 17.
+  - **Specialty (core) skills always max out at 16 to 18.** Better prospects lean toward 18.
+  - **19 and 20 are rare**, and a player gets at most one: 5★ 30% get a 20 and 30% a 19; 4.5★ 3% a 20 and 15% a 19; 4★ 7% a 19; 3.5★ 3%; 3★ 1%.
+  - Support skills top out at 13 to 17, everything else at 11 to 16. Only a 5★ can push an off-skill past 17.
   - **Bonus family:** each player gets a small lift to one skill family outside his core: Finishing, Shooting, Creating, Rebounding or Defense. It lifts the whole family a little (Rebounding raises both offensive and defensive rebounding by 2 or 3), never one skill a lot.
   - **Weak spot:** one non-core skill is cut roughly in half.
   - The draft board shows both under the archetype, for example "+Rebounding · weak passing".
@@ -92,4 +94,4 @@ Every class is checked against all of these rules before you can download it.
 | `generator.js` | All generation rules and the validator |
 | `data.js` | Name pools and hometowns |
 | `template.js` | The known-good Hoopland file shell the class is written into |
-| `tests/test.js` | `node tests/test.js` generates 660 classes and checks every rule |
+| `tests/test.js` | `node tests/test.js` generates 790 classes and checks every rule |

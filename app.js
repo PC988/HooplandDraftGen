@@ -59,7 +59,7 @@
     });
     document.querySelectorAll(".manualgrid input").forEach(function (inp) { inp.value = S.manual[inp.dataset.pot] || 0; });
     document.querySelectorAll("#ageseg button").forEach(function (b) { b.classList.toggle("on", b.dataset.ages === (S.ages || "draft")); b.setAttribute("aria-pressed", b.dataset.ages === (S.ages || "draft")); });
-    $("agehint").textContent = { draft: "Draft prospects: 19 to 22.", fresh18: "Every freshman enters college at 18.", freshDynamic: "Mostly 18. Some 19 to 20, a few 21, and 17 is very rare. Nobody over 21." }[S.ages || "draft"];
+    $("agehint").textContent = { draft: "Draft prospects: 19 to 22.", fresh18: "Every freshman enters college at 18.", freshDynamic: "18 for 70%, 19 for 29%, 17 for 1%. Nobody over 19." }[S.ages || "draft"];
     $("tab-auto").setAttribute("aria-selected", S.mode === "auto");
     $("tab-manual").setAttribute("aria-selected", S.mode === "manual");
     $("pane-auto").hidden = S.mode !== "auto";

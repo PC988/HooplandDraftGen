@@ -175,11 +175,11 @@
   }
 
   // ----------------------------------------------------------- AGES ----
-  // draft: 19 to 22. fresh18: every freshman is 18. freshDynamic: mostly 18, 17 is very rare, some 19 to 20, a few 21, never older.
-  var AGE_RANGE = { draft: [19, 22], fresh18: [18, 18], freshDynamic: [17, 21] };
+  // draft: 19 to 22. fresh18: every freshman is 18. freshDynamic: 18 (70%), 19 (29%), 17 (1%), never older.
+  var AGE_RANGE = { draft: [19, 22], fresh18: [18, 18], freshDynamic: [17, 19] };
   function rollAge(rng, mode) {
     if (mode === "fresh18") return 18;
-    if (mode === "freshDynamic") return rng.pick([[17, 3], [18, 62], [19, 24], [20, 9], [21, 2]]);
+    if (mode === "freshDynamic") return rng.pick([[17, 1], [18, 70], [19, 29]]);
     return rng.randint(19, 22);
   }
 
@@ -251,9 +251,15 @@
     "Rebounding": ["ORE", "DRE"], "Defense": ["STL", "BLK"]
   };
   var BONUS_LIFT = 1.3, WEAK_CUT = 0.5;
-  // Give each player his own shape: core skills top out at 16-20, one bonus family, one weak spot, wider roll.
-  function buildSkills(rng, total, w) {
-    var core = SKILLS.filter(function (s) { return w[s] >= 2.4; });
+  // Elite caps are rare and rolled once per player: at most one specialty skill reaches 19 or 20.
+  // Everyone else's specialty skills top out at 16 to 18 (better prospects lean toward 18).
+  var ELITE = { 10: [0.30, 0.30], 9: [0.03, 0.15], 8: [0, 0.07], 7: [0, 0.03], 6: [0, 0.01] }; // [P(20), P(19)]
+  var CORE_W = { 10: [[16, 2], [17, 4], [18, 4]], 9: [[16, 2], [17, 4], [18, 4]], 8: [[16, 3], [17, 4], [18, 3]] };
+  var NONCORE_MAX = 17;
+  // Give each player his own shape: specialty skills are filled to a 16-18 cap (19 rare, 20 basically only the best),
+  // one bonus family, one weak spot, the other points rolled across the rest.
+  function buildSkills(rng, total, w, pot, coreList) {
+    var core = SKILLS.filter(function (s) { return coreList.indexOf(s) >= 0; });
     var fams = Object.keys(FAMILIES).filter(function (f) {
       return !FAMILIES[f].some(function (s) { return core.indexOf(s) >= 0; });
     });
@@ -264,12 +270,25 @@
     SKILLS.forEach(function (s) {
       ww[s] = w[s] * (bonus && FAMILIES[bonus].indexOf(s) >= 0 ? BONUS_LIFT : 1) * (s === weak ? WEAK_CUT : 1);
     });
-    // ceilings: core 16-20, support 14-19, everything else 12-17, so spare points can't pile into one off-skill
-    var hi = SKILLS.map(function (s) {
-      return core.indexOf(s) >= 0 ? rng.randint(16, 20) : w[s] >= 1.6 ? rng.randint(14, 19) : rng.randint(12, 17);
-    });
-    if (hi.reduce(function (a, b) { return a + b; }, 0) < total) hi = SKILLS.map(function () { return 20; });
-    return { capv: distribute(rng, total, SKILLS.map(function (s) { return ww[s]; }), 1, hi, 0.4), bonus: bonus, weak: weak };
+    var cw = CORE_W[pot] || [[16, 4], [17, 4], [18, 2]];
+    var coreVal = {};
+    core.forEach(function (s) { coreVal[s] = rng.pick(cw); });
+    var e = ELITE[pot] || [0, 0], r = rng.random();
+    if (r < e[0] + e[1]) coreVal[rng.choice(core)] = r < e[0] ? 20 : 19;
+    var rest = SKILLS.filter(function (s) { return core.indexOf(s) < 0; });
+    var left = total - core.reduce(function (a, s) { return a + coreVal[s]; }, 0);
+    // non-core ceilings: support 13-17, everything else 11-16; raised toward 17 only if the points don't fit
+    var hi = rest.map(function (s) { return w[s] >= 1.6 ? rng.randint(13, 17) : rng.randint(11, 16); });
+    var sum = hi.reduce(function (a, b) { return a + b; }, 0);
+    while (sum < left) {
+      var open = rest.map(function (s, j) { return j; }).filter(function (j) { return hi[j] < NONCORE_MAX; });
+      if (!open.length) open = rest.map(function (s, j) { return j; }).filter(function (j) { return hi[j] < 20; });
+      var low = Math.min.apply(null, open.map(function (j) { return hi[j]; }));
+      hi[rng.choice(open.filter(function (j) { return hi[j] === low; }))]++; sum++;
+    }
+    var vals = distribute(rng, left, rest.map(function (s) { return ww[s]; }), 1, hi, 0.4), byS = {};
+    rest.forEach(function (s, j) { byS[s] = vals[j]; });
+    return { capv: SKILLS.map(function (s) { return core.indexOf(s) >= 0 ? coreVal[s] : byS[s]; }), bonus: bonus, weak: weak, core: core };
   }
 
   // Take `gap` points off proportionally to each cap.
@@ -540,7 +559,7 @@
       }
       var w1 = skillWeights(prim), w = w1;
       if (arcs.length > 1) { var w2 = skillWeights(arcs[1]); w = {}; SKILLS.forEach(function (s) { w[s] = 0.6 * w1[s] + 0.4 * w2[s]; }); }
-      var built = buildSkills(rng, (capOvr - 16) * 2, w), capv = built.capv;
+      var built = buildSkills(rng, (capOvr - 16) * 2, w, pot, ARCH[prim][2].split(" ")), capv = built.capv;
       // starting OVR: ceiling minus 15 to 27 (centred on 21, so most land near it); the 3 best are 7 to 14 below
       var gapOvr = top3.indexOf(i) >= 0 ? rng.randint(7, 14) : 21 + rng.randint(-3, 3) + rng.randint(-3, 3);
       // diamonds in the rough: some high-potential prospects start far below their ceiling (28 to 35)
@@ -586,7 +605,7 @@
         shirtC: "FFFFFF", tieC: rng.choice(["C42C36", "10316B", "306943", "141020"]),
         pantC: "1F2937", shoeC: "000000", laceC: "", soleC: "000000"
       }];
-      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom, slot: slot.idx, raw: raw, bonus: built.bonus, weak: built.weak } });
+      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom, slot: slot.idx, raw: raw, bonus: built.bonus, weak: built.weak, core: built.core } });
     }
     function skillSum(pl, idx) { return SKILLS.reduce(function (a, s) { return a + pl.attributes[s][idx]; }, 0); }
     players.sort(function (a, b) {
@@ -663,6 +682,14 @@
       var cur = SKILLS.map(function (s) { return p.attributes[s][0]; }), capv = SKILLS.map(function (s) { return p.attributes[s][1]; });
       if (wore && ovrOf(capv) < bestCap && ovrOf(capv) > medianCap) bad(p, "gear on a player outside the best / bottom half");
       if (cur.some(function (c, j) { return !(c >= 0 && c <= capv[j] && capv[j] <= 20); })) bad(p, "attribute out of range");
+      if (capv.filter(function (c) { return c >= 19; }).length > 1) bad(p, "more than one 19+ skill");
+      SKILLS.forEach(function (s, j) {
+        var isCore = m.core.indexOf(s) >= 0;
+        if (isCore && capv[j] < 16) bad(p, "specialty " + s + " below 16");
+        if (capv[j] === 20 && (!isCore || p.pot < 9)) bad(p, "20 " + s + " on a non-elite player");
+        if (capv[j] === 19 && !isCore) bad(p, "19 " + s + " outside his specialty");
+        if (!isCore && capv[j] > NONCORE_MAX && p.pot < 10) bad(p, "off-skill " + s + " capped at " + capv[j]);
+      });
       var co = ovrOf(cur), ko = ovrOf(capv);
       if (POTS.indexOf(p.pot) < 0) bad(p, "stars out of range");
       if (ko !== 30 + 7 * p.pot) bad(p, "cap " + ko + " is not the pot " + p.pot + " ceiling");
