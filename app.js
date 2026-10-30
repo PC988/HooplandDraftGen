@@ -24,6 +24,7 @@
     showCounts: false,
     five: { mode: "fixed", val: 3, min: 2, max: 5 },
     half: { mode: "fixed", val: null, min: 12, max: 20 },  // val null = follow the scaling default
+    four: { mode: "fixed", pct: null },                     // pct null = 3.5★ count follows the scaling
     manual: G.countsFromAuto(3),
     archMin: {},
     custom: []
@@ -31,6 +32,7 @@
   try {
     var saved = JSON.parse(localStorage.getItem(STORE) || "null");
     if (saved && saved.five) S = Object.assign(S, saved);
+    if (!S.four) S.four = { mode: "fixed", pct: null };
   } catch (e) { /* storage unavailable: defaults */ }
   function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 
@@ -40,11 +42,14 @@
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function classSize() { return S.mode === "manual" ? G.totalOf(S.manual) : autoSize(); }
   function autoSize() { return clamp(S.size || G.CLASS_SIZE, 9, G.MAX_SIZE); }
-  function halfVal(q5) { return S.half.val == null ? G.defaultN45(q5, autoSize()) : clamp(S.half.val, 0, G.maxN45(q5, autoSize())); }
+  // 4★ count from the share slider, or null to let the scaling pick the 3.5★ count
+  function fourN() { return S.four && S.four.pct != null ? Math.round(clamp(S.four.pct, 0, 100) / 100 * autoSize()) : null; }
+  function maxHalf(q5) { return G.maxN45(q5, autoSize(), fourN() != null); }
+  function halfVal(q5) { return S.half.val == null ? Math.min(G.defaultN45(q5, autoSize()), maxHalf(q5)) : clamp(S.half.val, 0, maxHalf(q5)); }
 
   // ------------------------------------------------------ tier panel ----
   function syncTierInputs() {
-    var q5 = clamp(S.five.val, 0, 10), mx = G.maxN45(q5, autoSize());
+    var q5 = clamp(S.five.val, 0, 10), mx = maxHalf(q5);
     $("csize").value = autoSize(); $("sizehint").textContent = autoSize();
     $("q5").value = q5; $("q5n").value = q5;
     $("q5min").value = S.five.min; $("q5max").value = S.five.max;
@@ -52,6 +57,13 @@
     var hv = halfVal(q5); $("h5").value = hv; $("h5n").value = hv;
     $("hrange").textContent = "0 to " + mx + (S.half.val == null ? " · following the scaling" : "");
     $("h5min").value = S.half.min; $("h5max").value = S.half.max;
+    var f4 = fourN(), got = G.countsFromAuto(q5, hv, autoSize(), f4);
+    var pct = S.four.pct != null ? clamp(S.four.pct, 0, 100) : Math.round(got[8] / autoSize() * 100);
+    $("f4").value = pct; $("f4n").value = pct;
+    $("frange").textContent = f4 == null ? "Following the scaling (" + got[8] + " players)." :
+      pct + "% = " + got[8] + " players" + (got[8] < f4 ? ", only " + got[8] + " spots left after 5★ and 4.5★" : "") + ". 3.5★ fill the other " + got[7] + ".";
+    $("fourReset").style.visibility = f4 == null ? "hidden" : "visible";
+    $("hcaphint").textContent = f4 == null ? "Capped at however many spots are left after the 5★ and 3.5★ players." : "Capped at however many spots are left after the 5★ players.";
     document.querySelectorAll(".tier").forEach(function (el) {
       var t = S[el.dataset.tier];
       el.classList.toggle("is-random", t.mode === "random");
@@ -72,7 +84,7 @@
     var q5 = S.five.mode === "random" ? Math.round((+S.five.min + +S.five.max) / 2) : clamp(S.five.val, 0, 10);
     q5 = clamp(q5, 0, 10);
     var h = S.half.mode === "random" ? Math.round((+S.half.min + +S.half.max) / 2) : halfVal(q5);
-    return { counts: G.countsFromAuto(q5, clamp(h, 0, G.maxN45(q5, autoSize())), autoSize()), ranged: S.five.mode === "random" || S.half.mode === "random" };
+    return { counts: G.countsFromAuto(q5, clamp(h, 0, maxHalf(q5)), autoSize(), fourN()), ranged: S.five.mode === "random" || S.half.mode === "random" };
   }
 
   function renderTiers() {
@@ -224,12 +236,12 @@
       var lo = clamp(Math.min(S.five.min, S.five.max), 0, 10), hi = clamp(Math.max(S.five.min, S.five.max), 0, 10);
       q5 = r.randint(lo, hi); rolled.push(q5 + " five-stars");
     } else q5 = clamp(S.five.val, 0, 10);
-    var mx = G.maxN45(q5, autoSize()), h;
+    var mx = maxHalf(q5), h;
     if (S.half.mode === "random") {
       var hlo = clamp(Math.min(S.half.min, S.half.max), 0, mx), hhi = clamp(Math.max(S.half.min, S.half.max), 0, mx);
       h = r.randint(hlo, hhi); rolled.push(h + " 4.5-stars");
     } else h = halfVal(q5);
-    return { counts: G.countsFromAuto(q5, h, autoSize()), rolled: rolled.length ? "Rolled " + rolled.join(" and ") + "." : "" };
+    return { counts: G.countsFromAuto(q5, h, autoSize(), fourN()), rolled: rolled.length ? "Rolled " + rolled.join(" and ") + "." : "" };
   }
   function cleanCustom() {
     return S.custom.filter(function (c) { return (c.fn || "").trim() || (c.ln || "").trim(); }).map(function (c) {
@@ -280,8 +292,12 @@
   });
   ["q5", "q5n"].forEach(function (id) { $(id).addEventListener("input", function () { if ($(id).value !== "") { S.five.val = clamp($(id).value, 0, 10); changed(); } }); });
   ["h5", "h5n"].forEach(function (id) {
-    $(id).addEventListener("input", function () { if ($(id).value !== "") { S.half.val = clamp($(id).value, 0, G.maxN45(clamp(S.five.val, 0, 10), autoSize())); changed(); } });
+    $(id).addEventListener("input", function () { if ($(id).value !== "") { S.half.val = clamp($(id).value, 0, maxHalf(clamp(S.five.val, 0, 10))); changed(); } });
   });
+  ["f4", "f4n"].forEach(function (id) {
+    $(id).addEventListener("input", function () { if ($(id).value !== "") { S.four.pct = clamp($(id).value, 0, 100); changed(); } });
+  });
+  $("fourReset").addEventListener("click", function () { S.four.pct = null; changed(); });
   [["q5min", "five", "min", 10], ["q5max", "five", "max", 10], ["h5min", "half", "min", 150], ["h5max", "half", "max", 150]].forEach(function (x) {
     $(x[0]).addEventListener("input", function () { if ($(x[0]).value !== "") { S[x[1]][x[2]] = clamp($(x[0]).value, 0, x[3]); save(); renderTiers(); } });
   });

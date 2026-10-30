@@ -190,14 +190,20 @@
   // 4.5-star count is chosen by the user (slider); it comes out of the 4-star pool.
   function sz(size) { return size == null || isNaN(size) ? CLASS_SIZE : Math.max(9, Math.min(MAX_SIZE, Math.round(size))); }
   function n35Of(q, size) { size = sz(size); return Math.max(0, Math.min(size - q, Math.round(N35[q] * size / CLASS_SIZE))); }
-  function maxN45(q, size) { size = sz(size); return Math.max(0, size - q - n35Of(q, size)); }
+  // n4 (optional): exact number of 4-star players. When set, 3.5-stars are whatever is left after 5, 4.5 and 4 stars,
+  // so a class can be made as 3.5-heavy as you like. When null, the N35 scaling decides the 3.5-star count.
+  function hasN4(n4) { return n4 != null && !isNaN(n4); }
+  function maxN45(q, size, n4set) { size = sz(size); q = Math.min(q, size); return n4set ? size - q : Math.max(0, size - q - n35Of(q, size)); }
   function defaultN45(q, size) { return Math.round(maxN45(q, size) * (0.30 + 0.02 * q)); }
-  function classTiers(q, n45, size) {
+  function classTiers(q, n45, size, n4) {
     size = sz(size); q = Math.min(q, size);
-    var n35 = n35Of(q, size), rest = maxN45(q, size);
+    var fixed4 = hasN4(n4), rest = maxN45(q, size, fixed4);
     if (n45 == null || isNaN(n45)) n45 = defaultN45(q, size);
     n45 = Math.max(0, Math.min(rest, Math.round(n45)));
-    var n4 = rest - n45, pots = [];
+    var n35;
+    if (fixed4) { n4 = Math.max(0, Math.min(rest - n45, Math.round(n4))); n35 = rest - n45 - n4; }
+    else { n4 = rest - n45; n35 = n35Of(q, size); }
+    var pots = [];
     function add(p, n) { for (var i = 0; i < n; i++) pots.push(p); }
     add(10, q); add(9, n45); add(8, n4); add(7, n35);
     return pots;
@@ -418,8 +424,8 @@
   // }
   var POTS = [10, 9, 8, 7, 6];
   function starLabel(pot) { return (pot / 2) + "★"; }
-  function countsFromAuto(q5, n45, size) {
-    var t = classTiers(q5, n45, size), c = { 10: 0, 9: 0, 8: 0, 7: 0, 6: 0 };
+  function countsFromAuto(q5, n45, size, n4) {
+    var t = classTiers(q5, n45, size, n4), c = { 10: 0, 9: 0, 8: 0, 7: 0, 6: 0 };
     t.forEach(function (p) { c[p]++; });
     return c;
   }

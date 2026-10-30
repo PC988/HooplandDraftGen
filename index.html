@@ -228,14 +228,23 @@
             </div>
             <div class="random">
               <div class="rangein">Between <input type="number" id="h5min" min="0" inputmode="numeric" aria-label="4.5-star minimum"> and <input type="number" id="h5max" min="0" inputmode="numeric" aria-label="4.5-star maximum"></div>
-              <div class="hint">Capped at however many spots are left after the 5★ and 3.5★ players.</div>
+              <div class="hint" id="hcaphint">Capped at however many spots are left after the 5★ and 3.5★ players.</div>
+            </div>
+          </div>
+          <div class="tier" data-tier="four">
+            <div class="tierhead"><span class="label" id="l4">4-star share of the class (%)</span>
+              <button type="button" class="seg" id="fourReset" style="padding:4px 10px;font-size:12px">Use scaling</button></div>
+            <div class="fixed">
+              <input class="qinput" type="number" id="f4n" min="0" max="100" inputmode="numeric" aria-labelledby="l4" style="color:var(--s4)">
+              <input type="range" id="f4" min="0" max="100" step="1" aria-labelledby="l4">
+              <div class="hint" id="frange"></div>
             </div>
           </div>
         </div>
         <div class="sizerow">
           <label class="label" for="csize">Class size</label>
           <input type="number" id="csize" min="9" max="300" inputmode="numeric">
-          <span class="hint">players (9 to 300). 4★ and 3.5★ fill the rest of the <span id="sizehint">60</span> using the scaling.</span>
+          <span class="hint">players (9 to 300). 4★ and 3.5★ fill the rest of the <span id="sizehint">60</span>.</span>
         </div>
       </div>
 

@@ -42,6 +42,15 @@ for (var s = 0; s < 120; s++) {
 [9, 30, 120, 190, 300].forEach(function (n) {
   for (var s = 0; s < 6; s++) run({ counts: G.countsFromAuto(R.randint(0, 10), undefined, n) }, 7000 + n + s, "size " + n);
 });
+// 4b2. 4-star share set: 3.5-stars fill whatever is left
+var fourBad = 0;
+for (var s = 0; s < 60; s++) {
+  var size = R.choice([30, 60, 60, 120]), q = R.randint(0, 10), h = R.randint(0, 20), n4 = R.randint(0, size);
+  var c4 = G.countsFromAuto(q, h, size, n4);
+  if (G.totalOf(c4) !== size || c4[8] > n4 || (c4[8] < n4 && c4[7] !== 0)) fourBad++;
+  run({ counts: c4 }, 6000 + s, "four share");
+}
+if (fourBad) { fails += fourBad; console.log("4-star share counts wrong:", fourBad); }
 // 4c. freshman age modes
 ["fresh18", "freshDynamic"].forEach(function (m) {
   for (var s = 0; s < 20; s++) run({ counts: G.countsFromAuto(R.randint(0, 10)), ages: m }, 8000 + s, "ages " + m);
