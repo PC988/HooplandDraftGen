@@ -70,6 +70,7 @@ The rest are 4 and 4.5 stars. The 4.5-star slider picks how many of them are 4.5
   - Dark skin always has black hair.
   - Light skin gets black, brown, blond or red, but only colors that contrast with the skin.
   - 1% get wild dyed hair.
+- **Eyes:** dark-skinned players always have black eyes. No light brown eyes for anyone.
 - **Brows and facial hair** always match.
 - **Banned styles:** hair 29, 39, 40, 45, 47 to 49, 52, 57, 58, 63, 64, 68, 69, 80 to 82, 90, 91, 101 to 105, 115, 116, 124, 125, 127, 128, 131, 165 to 167. Facial hair 4, 8 to 14, 19 to 24, 31.
 - **Color 262539** is never used.

@@ -71,8 +71,9 @@
   var HAIR_LIGHT = [["141020", 24], ["46211F", 22], ["6B3E26", 15], ["8A5A35", 8], ["E0B84A", 12], ["C9A13F", 10],
     ["C2562A", 5], ["97432A", 4]];
   var HAIR_WILD = ["E63946", "3BB273", "2F6BFF", "FF6FB5", "F2F2F2"];
-  var EYE_DARK = [["141020", 70], ["46211F", 30]];
-  var EYE_LIGHT = [["141020", 30], ["46211F", 25], ["472D3C", 15], ["154FA1", 12], ["2E6A42", 10], ["0D2F6D", 8]];
+  // no light brown eyes (46211F): they glow on dark skin
+  var EYE_DARK = [["141020", 100]];
+  var EYE_LIGHT = [["141020", 55], ["472D3C", 15], ["154FA1", 12], ["2E6A42", 10], ["0D2F6D", 8]];
 
   var GEAR_NORMAL = [["PRI", 40], ["SEC", 25], ["FFFFFF", 25], ["4A4A55", 10]];
   var GEAR_SIGNATURE = ["7FD3FF", "E63946", "F77F00", "9B5DE5", "A3E635", "FF6FB5", "FFD23F", "14B8A6"];
@@ -668,6 +669,7 @@
       if (HAIR_IDS.indexOf(+a.hair) < 0) bad(p, "banned hair " + a.hair);
       if (FHAIR_BANNED.indexOf(+a.fHair) >= 0 || +a.fHair < 0 || +a.fHair > 31) bad(p, "banned facial hair " + a.fHair);
       if (a.browC !== a.fHairC) bad(p, "brow != facial hair color");
+      if (a.eyeC === "46211F") bad(p, "light brown eyes");
       if (a.hairC !== a.browC && HAIR_WILD.indexOf(a.hairC) < 0) bad(p, "hair color mismatch");
       if (m.dark && a.browC !== "141020") bad(p, "dark skin with non-black hair");
       if (acc.length !== 4 || acc.some(function (y) { return JSON.stringify(y) !== JSON.stringify(acc[0]); })) bad(p, "accessory sets differ");
