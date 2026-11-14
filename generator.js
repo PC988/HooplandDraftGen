@@ -332,10 +332,15 @@
     var natural, eye;
     if (dark) { natural = rng.pick(HAIR_DARK); eye = rng.pick(EYE_DARK); }
     else {
-      for (var t = 0; t < 50; t++) { natural = rng.pick(HAIR_LIGHT); if (Math.abs(lum(natural) - lum(skin)) >= 0.15) break; }
+      // facial hair and brows use the natural color, which must be clearly darker than the skin
+      var okHair = HAIR_LIGHT.filter(function (h) { return lum(skin) - lum(h[0]) >= 0.15; });
+      natural = rng.pick(okHair.length ? okHair : [["141020", 1]]);
       eye = rng.pick(EYE_LIGHT);
     }
-    var hairC = rng.random() < 0.01 ? rng.choice(HAIR_WILD) : natural;
+    // a dyed (wild) scalp color must be lighter than the natural color, so facial hair stays the darker one
+    var wild = HAIR_WILD.filter(function (c) { return lum(c) > lum(natural); });
+    var hairRoll = rng.random();
+    var hairC = hairRoll < 0.01 && wild.length ? rng.choice(wild) : natural;
     var r = rng.random(), fh = r < 0.45 ? 0 : (r < 0.90 ? rng.choice(FHAIR_COMMON) : rng.choice(FHAIR_RARE));
     return {
       skinC: skin, eyeC: eye, unibrow: rng.random() < 0.005, browC: natural,
@@ -687,6 +692,8 @@
       if (HAIR_IDS.indexOf(+a.hair) < 0) bad(p, "banned hair " + a.hair);
       if (FHAIR_BANNED.indexOf(+a.fHair) >= 0 || +a.fHair < 0 || +a.fHair > 31) bad(p, "banned facial hair " + a.fHair);
       if (a.browC !== a.fHairC) bad(p, "brow != facial hair color");
+      if (lum(a.fHairC) >= lum(a.skinC)) bad(p, "facial hair not darker than skin");
+      if (a.fHairC !== a.hairC && lum(a.fHairC) >= lum(a.hairC)) bad(p, "facial hair not darker than hair");
       if (a.eyeC === "46211F") bad(p, "light brown eyes");
       if (a.hairC !== a.browC && HAIR_WILD.indexOf(a.hairC) < 0) bad(p, "hair color mismatch");
       if (m.dark && a.browC !== "141020") bad(p, "dark skin with non-black hair");
