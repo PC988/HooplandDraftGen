@@ -71,8 +71,9 @@
   var HAIR_LIGHT = [["141020", 24], ["46211F", 22], ["6B3E26", 15], ["8A5A35", 8], ["E0B84A", 12], ["C9A13F", 10],
     ["C2562A", 5], ["97432A", 4]];
   var HAIR_WILD = ["E63946", "3BB273", "2F6BFF", "FF6FB5", "F2F2F2"];
-  var EYE_DARK = [["141020", 70], ["46211F", 30]];
-  var EYE_LIGHT = [["141020", 30], ["46211F", 25], ["472D3C", 15], ["154FA1", 12], ["2E6A42", 10], ["0D2F6D", 8]];
+  // no light brown eyes (46211F): they glow on dark skin
+  var EYE_DARK = [["141020", 100]];
+  var EYE_LIGHT = [["141020", 55], ["472D3C", 15], ["154FA1", 12], ["2E6A42", 10], ["0D2F6D", 8]];
 
   var GEAR_NORMAL = [["PRI", 40], ["SEC", 25], ["FFFFFF", 25], ["4A4A55", 10]];
   var GEAR_SIGNATURE = ["7FD3FF", "E63946", "F77F00", "9B5DE5", "A3E635", "FF6FB5", "FFD23F", "14B8A6"];
@@ -82,7 +83,7 @@
   var LIMB_SLOTS = ["L_Shoulder", "R_Shoulder", "L_Elbow", "R_Elbow", "L_Wrist", "R_Wrist", "L_Knee", "R_Knee", "L_Shin", "R_Shin"];
 
   var NUM_VERY_COMMON = range(0, 11);
-  var NUM_COMMON = [100, 20, 21, 23, 25, 30, 31, 41];   // 100 = "00" in Hoopland
+  var NUM_COMMON = [100, 20, 21, 23, 25, 30, 31, 41]; // 100 = "00" in Hoopland
   var NUM_RARE = [12, 13, 14, 15, 17, 22, 24, 32, 33, 34, 35, 44, 55, 77, 88];
 
   // code, weight, chance of dark skin (overall split lands near 50/50)
@@ -231,6 +232,15 @@
     };
   }
 
+  // ----------------------------------------------------------- AGES ----
+  // draft: 19 to 22. fresh18: every freshman is 18. freshDynamic: 18 (70%), 19 (29%), 17 (1%), never older.
+  var AGE_RANGE = { draft: [19, 22], fresh18: [18, 18], freshDynamic: [17, 19] };
+  function rollAge(rng, mode) {
+    if (mode === "fresh18") return 18;
+    if (mode === "freshDynamic") return rng.pick([[17, 1], [18, 70], [19, 29]]);
+    return rng.randint(19, 22);
+  }
+
   // ---------------------------------------------------------- TIERS ----
   // 3.5 stars is the floor. N35[q] = number of 3.5-star prospects at quality q (at q=3, 80% are 4+ stars).
   var N35 = [18, 16, 14, 12, 10, 9, 7, 6, 5, 4, 3];
@@ -238,14 +248,20 @@
   // 4.5-star count is chosen by the user (slider); it comes out of the 4-star pool.
   function sz(size) { return size == null || isNaN(size) ? CLASS_SIZE : Math.max(9, Math.min(MAX_SIZE, Math.round(size))); }
   function n35Of(q, size) { size = sz(size); return Math.max(0, Math.min(size - q, Math.round(N35[q] * size / CLASS_SIZE))); }
-  function maxN45(q, size) { size = sz(size); return Math.max(0, size - q - n35Of(q, size)); }
+  // n4 (optional): exact number of 4-star players. When set, 3.5-stars are whatever is left after 5, 4.5 and 4 stars,
+  // so a class can be made as 3.5-heavy as you like. When null, the N35 scaling decides the 3.5-star count.
+  function hasN4(n4) { return n4 != null && !isNaN(n4); }
+  function maxN45(q, size, n4set) { size = sz(size); q = Math.min(q, size); return n4set ? size - q : Math.max(0, size - q - n35Of(q, size)); }
   function defaultN45(q, size) { return Math.round(maxN45(q, size) * (0.30 + 0.02 * q)); }
-  function classTiers(q, n45, size) {
+  function classTiers(q, n45, size, n4) {
     size = sz(size); q = Math.min(q, size);
-    var n35 = n35Of(q, size), rest = maxN45(q, size);
+    var fixed4 = hasN4(n4), rest = maxN45(q, size, fixed4);
     if (n45 == null || isNaN(n45)) n45 = defaultN45(q, size);
     n45 = Math.max(0, Math.min(rest, Math.round(n45)));
-    var n4 = rest - n45, pots = [];
+    var n35;
+    if (fixed4) { n4 = Math.max(0, Math.min(rest - n45, Math.round(n4))); n35 = rest - n45 - n4; }
+    else { n4 = rest - n45; n35 = n35Of(q, size); }
+    var pots = [];
     function add(p, n) { for (var i = 0; i < n; i++) pots.push(p); }
     add(10, q); add(9, n45); add(8, n4); add(7, n35);
     return pots;
@@ -266,11 +282,13 @@
   function ovrOf(vals) { return 16 + vals.reduce(function (a, b) { return a + b; }, 0) / 2; }
   function fits(a, pos) { return ARCH[a][0] <= pos && pos <= ARCH[a][1]; }
 
-  // Split `total` points over slots in [lo, hi], proportional to weights.
-  function distribute(rng, total, weights, lo, hi) {
-    lo = lo == null ? 1 : lo; hi = hi == null ? 20 : hi;
-    var n = weights.length, room = hi - lo, i;
-    var w = weights.map(function (x) { return x * rng.uniform(0.8, 1.2); });
+  // Split `total` points over slots in [lo, hi[i]], proportional to weights after a random roll of +/-`jit`.
+  // hi can be one number or a per-slot array (used to give core skills their own 16-20 ceiling).
+  function distribute(rng, total, weights, lo, hi, jit) {
+    lo = lo == null ? 1 : lo; jit = jit == null ? 0.2 : jit;
+    var n = weights.length, i;
+    var room = weights.map(function (_, j) { return (Array.isArray(hi) ? hi[j] : (hi == null ? 20 : hi)) - lo; });
+    var w = weights.map(function (x) { return x * rng.uniform(1 - jit, 1 + jit); });
     var vals = new Array(n).fill(0), free = range(0, n - 1), remaining = total - lo * n;
     while (free.length && remaining > 1e-9) {
       var sw = free.reduce(function (a, j) { return a + w[j]; }, 0);
@@ -278,15 +296,62 @@
       remaining = 0;
       var keep = [];
       free.forEach(function (j) {
-        if (vals[j] > room) { remaining += vals[j] - room; vals[j] = room; } else keep.push(j);
+        if (vals[j] > room[j]) { remaining += vals[j] - room[j]; vals[j] = room[j]; } else keep.push(j);
       });
       free = keep;
     }
     var ints = vals.map(function (v) { return Math.floor(v + 1e-9); });
     var short = (total - lo * n) - ints.reduce(function (a, b) { return a + b; }, 0);
     var order = range(0, n - 1).sort(function (a, b) { return (vals[b] - ints[b]) - (vals[a] - ints[a]); });
-    for (var k = 0; short > 0; k++) { i = order[k % n]; if (ints[i] < room) { ints[i]++; short--; } }
+    for (var k = 0; short > 0 && k < n * 40; k++) { i = order[k % n]; if (ints[i] < room[i]) { ints[i]++; short--; } }
     return ints.map(function (v) { return v + lo; });
+  }
+
+  // Skill families for the random bonus / weak spot. A bonus lifts a whole family a little (e.g. "Rebounding"
+  // lifts both ORE and DRE slightly) rather than spiking one skill.
+  var FAMILIES = {
+    "Finishing": ["LAY", "DNK", "INS"], "Shooting": ["MID", "TPT", "FTS"], "Creating": ["DRB", "PAS"],
+    "Rebounding": ["ORE", "DRE"], "Defense": ["STL", "BLK"]
+  };
+  var BONUS_LIFT = 1.3, WEAK_CUT = 0.5;
+  // Elite caps are rare and rolled once per player: at most one specialty skill reaches 19 or 20.
+  // Everyone else's specialty skills top out at 16 to 18 (better prospects lean toward 18).
+  var ELITE = { 10: [0.30, 0.30], 9: [0.03, 0.15], 8: [0, 0.07], 7: [0, 0.03], 6: [0, 0.01] }; // [P(20), P(19)]
+  var CORE_W = { 10: [[16, 2], [17, 4], [18, 4]], 9: [[16, 2], [17, 4], [18, 4]], 8: [[16, 3], [17, 4], [18, 3]] };
+  var NONCORE_MAX = 17;
+  // Give each player his own shape: specialty skills are filled to a 16-18 cap (19 rare, 20 basically only the best),
+  // one bonus family, one weak spot, the other points rolled across the rest.
+  function buildSkills(rng, total, w, pot, coreList) {
+    var core = SKILLS.filter(function (s) { return coreList.indexOf(s) >= 0; });
+    var fams = Object.keys(FAMILIES).filter(function (f) {
+      return !FAMILIES[f].some(function (s) { return core.indexOf(s) >= 0; });
+    });
+    var bonus = fams.length ? rng.choice(fams) : null;
+    var weakPool = SKILLS.filter(function (s) { return core.indexOf(s) < 0 && (!bonus || FAMILIES[bonus].indexOf(s) < 0); });
+    var weak = rng.choice(weakPool);
+    var ww = {};
+    SKILLS.forEach(function (s) {
+      ww[s] = w[s] * (bonus && FAMILIES[bonus].indexOf(s) >= 0 ? BONUS_LIFT : 1) * (s === weak ? WEAK_CUT : 1);
+    });
+    var cw = CORE_W[pot] || [[16, 4], [17, 4], [18, 2]];
+    var coreVal = {};
+    core.forEach(function (s) { coreVal[s] = rng.pick(cw); });
+    var e = ELITE[pot] || [0, 0], r = rng.random();
+    if (r < e[0] + e[1]) coreVal[rng.choice(core)] = r < e[0] ? 20 : 19;
+    var rest = SKILLS.filter(function (s) { return core.indexOf(s) < 0; });
+    var left = total - core.reduce(function (a, s) { return a + coreVal[s]; }, 0);
+    // non-core ceilings: support 13-17, everything else 11-16; raised toward 17 only if the points don't fit
+    var hi = rest.map(function (s) { return w[s] >= 1.6 ? rng.randint(13, 17) : rng.randint(11, 16); });
+    var sum = hi.reduce(function (a, b) { return a + b; }, 0);
+    while (sum < left) {
+      var open = rest.map(function (s, j) { return j; }).filter(function (j) { return hi[j] < NONCORE_MAX; });
+      if (!open.length) open = rest.map(function (s, j) { return j; }).filter(function (j) { return hi[j] < 20; });
+      var low = Math.min.apply(null, open.map(function (j) { return hi[j]; }));
+      hi[rng.choice(open.filter(function (j) { return hi[j] === low; }))]++; sum++;
+    }
+    var vals = distribute(rng, left, rest.map(function (s) { return ww[s]; }), 1, hi, 0.4), byS = {};
+    rest.forEach(function (s, j) { byS[s] = vals[j]; });
+    return { capv: SKILLS.map(function (s) { return core.indexOf(s) >= 0 ? coreVal[s] : byS[s]; }), bonus: bonus, weak: weak, core: core };
   }
 
   // Take `gap` points off proportionally to each cap.
@@ -305,10 +370,15 @@
     var natural, eye;
     if (dark) { natural = rng.pick(HAIR_DARK); eye = rng.pick(EYE_DARK); }
     else {
-      for (var t = 0; t < 50; t++) { natural = rng.pick(HAIR_LIGHT); if (Math.abs(lum(natural) - lum(skin)) >= 0.15) break; }
+      // facial hair and brows use the natural color, which must be clearly darker than the skin
+      var okHair = HAIR_LIGHT.filter(function (h) { return lum(skin) - lum(h[0]) >= 0.15; });
+      natural = rng.pick(okHair.length ? okHair : [["141020", 1]]);
       eye = rng.pick(EYE_LIGHT);
     }
-    var hairC = rng.random() < 0.01 ? rng.choice(HAIR_WILD) : natural;
+    // a dyed (wild) scalp color must be lighter than the natural color, so facial hair stays the darker one
+    var wild = HAIR_WILD.filter(function (c) { return lum(c) > lum(natural); });
+    var hairRoll = rng.random();
+    var hairC = hairRoll < 0.01 && wild.length ? rng.choice(wild) : natural;
     var r = rng.random(), fh = r < 0.45 ? 0 : (r < 0.90 ? rng.choice(FHAIR_COMMON) : rng.choice(FHAIR_RARE));
     return {
       skinC: skin, eyeC: eye, unibrow: rng.random() < 0.005, browC: natural,
@@ -410,14 +480,14 @@
 
   // ---------------------------------------------------------- CLASS ----
   // opts = {
-  //   counts: {10: n, 9: n, 8: n, 7: n, 6: n}   players per star tier (pot 10 = 5★ ... pot 6 = 3★)
-  //   archMin: {"Slasher": n, ...}              at least n players with this primary archetype
-  //   custom: [{fn, ln, num, pot, arch}]          num/pot/arch null = random
+  //   counts:  {10: n, 9: n, 8: n, 7: n, 6: n}   players per star tier (pot 10 = 5★ ... pot 6 = 3★)
+  //   archMin: {"Slasher": n, ...}               at least n players with this primary archetype
+  //   custom:  [{fn, ln, num, pot, arch}]        num/pot/arch null = random
   // }
   var POTS = [10, 9, 8, 7, 6];
   function starLabel(pot) { return (pot / 2) + "★"; }
-  function countsFromAuto(q5, n45, size) {
-    var t = classTiers(q5, n45, size), c = { 10: 0, 9: 0, 8: 0, 7: 0, 6: 0 };
+  function countsFromAuto(q5, n45, size, n4) {
+    var t = classTiers(q5, n45, size, n4), c = { 10: 0, 9: 0, 8: 0, 7: 0, 6: 0 };
     t.forEach(function (p) { c[p]++; });
     return c;
   }
@@ -557,7 +627,7 @@
       }
       var w1 = skillWeights(prim), w = w1;
       if (arcs.length > 1) { var w2 = skillWeights(arcs[1]); w = {}; SKILLS.forEach(function (s) { w[s] = 0.6 * w1[s] + 0.4 * w2[s]; }); }
-      var capv = distribute(rng, (capOvr - 16) * 2, SKILLS.map(function (s) { return w[s]; }));
+      var built = buildSkills(rng, (capOvr - 16) * 2, w, pot, ARCH[prim][2].split(" ")), capv = built.capv;
       // starting OVR: ceiling minus 15 to 27 (centred on 21, so most land near it); the 3 best are 7 to 14 below
       var gapOvr = top3.indexOf(i) >= 0 ? rng.randint(7, 14) : 21 + rng.randint(-3, 3) + rng.randint(-3, 3);
       // diamonds in the rough: some high-potential prospects start far below their ceiling (28 to 35)
@@ -586,7 +656,7 @@
       var fields = {
         id: i + 1, tid: 0, fn: nm[0], ln: nm[1], tag: "", home: "", ctry: ctry,  // game fills hometown from loc; a typed home breaks its lookup
         loc: { x: town[0], y: town[1] },
-        age: rng.randint(19, 22), ht: ht, wt: wt, yrs: 0, num: num, gender: 0, pos: pos,
+        age: rollAge(rng, opts.ages), ht: ht, wt: wt, yrs: 0, num: num, gender: 0, pos: pos,
         pri: 11, sec: rng.randint(1, 10),
         arc: arcs.length === 1 ? prim : ADJ[arcs[1]] + " " + prim,
         pot: pot, regressionAge: rng.choice([31, 32, 33, 33, 34, 34, 34, 35, 35, 36, 37]),
@@ -603,7 +673,7 @@
         shirtC: "FFFFFF", tieC: rng.choice(["C42C36", "10316B", "306943", "141020"]),
         pantC: "1F2937", shoeC: "000000", laceC: "", soleC: "000000"
       }];
-      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom, slot: slot.idx, raw: raw } });
+      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom, slot: slot.idx, raw: raw, bonus: built.bonus, weak: built.weak, core: built.core } });
     }
     function skillSum(pl, idx) { return SKILLS.reduce(function (a, s) { return a + pl.attributes[s][idx]; }, 0); }
     players.sort(function (a, b) {
@@ -621,7 +691,7 @@
   [[], ["L_Shoulder", "R_Shoulder"], ["L_Wrist", "R_Wrist"]].forEach(function (s) { UPPER_OK[setKey(s)] = 1; });
   ["L", "R"].forEach(function (s) {
     [[s + "_Shoulder", s + "_Elbow", s + "_Wrist"], ["L_Shoulder", "R_Shoulder", s + "_Elbow", s + "_Wrist"],
-      [s + "_Wrist"], [s + "_Shoulder", s + "_Wrist"], [s + "_Shoulder"]].forEach(function (x) { UPPER_OK[setKey(x)] = 1; });
+    [s + "_Wrist"], [s + "_Shoulder", s + "_Wrist"], [s + "_Shoulder"]].forEach(function (x) { UPPER_OK[setKey(x)] = 1; });
   });
   [[], ["L_Knee", "R_Knee"], ["L_Shin", "R_Shin"], ["L_Knee", "R_Knee", "L_Shin", "R_Shin"]].forEach(function (s) { LOWER_OK[setKey(s)] = 1; });
   var ALLOWED_NUMS = NUM_VERY_COMMON.concat(NUM_COMMON, NUM_RARE);
@@ -660,6 +730,9 @@
       if (HAIR_IDS.indexOf(+a.hair) < 0) bad(p, "banned hair " + a.hair);
       if (FHAIR_BANNED.indexOf(+a.fHair) >= 0 || +a.fHair < 0 || +a.fHair > 31) bad(p, "banned facial hair " + a.fHair);
       if (a.browC !== a.fHairC) bad(p, "brow != facial hair color");
+      if (lum(a.fHairC) >= lum(a.skinC)) bad(p, "facial hair not darker than skin");
+      if (a.fHairC !== a.hairC && lum(a.fHairC) >= lum(a.hairC)) bad(p, "facial hair not darker than hair");
+      if (a.eyeC === "46211F") bad(p, "light brown eyes");
       if (a.hairC !== a.browC && HAIR_WILD.indexOf(a.hairC) < 0) bad(p, "hair color mismatch");
       if (m.dark && a.browC !== "141020") bad(p, "dark skin with non-black hair");
       if (acc.length !== 4 || acc.some(function (y) { return JSON.stringify(y) !== JSON.stringify(acc[0]); })) bad(p, "accessory sets differ");
@@ -680,12 +753,21 @@
       var cur = SKILLS.map(function (s) { return p.attributes[s][0]; }), capv = SKILLS.map(function (s) { return p.attributes[s][1]; });
       if (wore && ovrOf(capv) < bestCap && ovrOf(capv) > medianCap) bad(p, "gear on a player outside the best / bottom half");
       if (cur.some(function (c, j) { return !(c >= 0 && c <= capv[j] && capv[j] <= 20); })) bad(p, "attribute out of range");
+      if (capv.filter(function (c) { return c >= 19; }).length > 1) bad(p, "more than one 19+ skill");
+      SKILLS.forEach(function (s, j) {
+        var isCore = m.core.indexOf(s) >= 0;
+        if (isCore && capv[j] < 16) bad(p, "specialty " + s + " below 16");
+        if (capv[j] === 20 && (!isCore || p.pot < 9)) bad(p, "20 " + s + " on a non-elite player");
+        if (capv[j] === 19 && !isCore) bad(p, "19 " + s + " outside his specialty");
+        if (!isCore && capv[j] > NONCORE_MAX && p.pot < 10) bad(p, "off-skill " + s + " capped at " + capv[j]);
+      });
       var co = ovrOf(cur), ko = ovrOf(capv);
       if (POTS.indexOf(p.pot) < 0) bad(p, "stars out of range");
       if (ko !== 30 + 7 * p.pot) bad(p, "cap " + ko + " is not the pot " + p.pot + " ceiling");
       var gap = ko - co;
       if (m.top3) { tops++; if (gap < 7 || gap > 14) bad(p, "top-3 gap " + gap); } else if (m.raw ? (gap < 28 || gap > 35 || p.pot < 8) : (gap < 15 || gap > 27)) bad(p, "gap " + gap);
-      if (p.age < 19 || p.age > 22) bad(p, "age");
+      var ar = AGE_RANGE[opts.ages] || AGE_RANGE.draft;
+      if (p.age < ar[0] || p.age > ar[1]) bad(p, "age " + p.age);
       if (!DATA.LOCS[p.ctry] || !DATA.LOCS[p.ctry].some(function (l) { return l[0] === p.loc.x && l[1] === p.loc.y; })) bad(p, "hometown is not a city the game knows");
       if (p.home !== "") bad(p, "hometown text must be blank");
       if (!m.custom && ALLOWED_NUMS.indexOf(p.num) < 0) bad(p, "jersey number");
@@ -741,7 +823,7 @@
   }
 
   var API = {
-    CLASS_SIZE: CLASS_SIZE, MAX_SIZE: MAX_SIZE, SKILLS: SKILLS, BADGE_NAMES: BADGE_NAMES, ARCH: ARCH,
+    CLASS_SIZE: CLASS_SIZE, MAX_SIZE: MAX_SIZE, FAMILIES: FAMILIES, AGE_RANGE: AGE_RANGE, SKILLS: SKILLS, BADGE_NAMES: BADGE_NAMES, ARCH: ARCH,
     classTiers: classTiers, tierSummary: tierSummary, maxN45: maxN45, defaultN45: defaultN45, countsFromAuto: countsFromAuto, expectedArch: expectedArch,
     totalOf: totalOf, checkOpts: checkOpts, parseNum: parseNum, makeRng: makeRng, POTS: POTS, generate: generate, validate: validate,
     makeClass: makeClass, buildFile: buildFile, ovrOf: ovrOf, lum: lum,
