@@ -71,9 +71,8 @@
   var HAIR_LIGHT = [["141020", 24], ["46211F", 22], ["6B3E26", 15], ["8A5A35", 8], ["E0B84A", 12], ["C9A13F", 10],
     ["C2562A", 5], ["97432A", 4]];
   var HAIR_WILD = ["E63946", "3BB273", "2F6BFF", "FF6FB5", "F2F2F2"];
-  // no light brown eyes (46211F): they glow on dark skin
-  var EYE_DARK = [["141020", 100]];
-  var EYE_LIGHT = [["141020", 55], ["472D3C", 15], ["154FA1", 12], ["2E6A42", 10], ["0D2F6D", 8]];
+  var EYE_DARK = [["141020", 70], ["46211F", 30]];
+  var EYE_LIGHT = [["141020", 30], ["46211F", 25], ["472D3C", 15], ["154FA1", 12], ["2E6A42", 10], ["0D2F6D", 8]];
 
   var GEAR_NORMAL = [["PRI", 40], ["SEC", 25], ["FFFFFF", 25], ["4A4A55", 10]];
   var GEAR_SIGNATURE = ["7FD3FF", "E63946", "F77F00", "9B5DE5", "A3E635", "FF6FB5", "FFD23F", "14B8A6"];
@@ -114,34 +113,73 @@
     "Mid-Range Specialist": [0, 6, "MID DRB", "LAY FTS TPT", "ORE BLK DRE", "twoPoint fades pumpFake step", "post offReb", { STM: 1 }, 8],
     "Ball Hawk": [0, 3, "STL DRB", "TPT FTS LAY", "INS ORE BLK", "stealOnBall stealOffBall cross", "post hook offReb", { SPD: 3 }, 7],
     "Spot-Up Shooter": [2, 8, "TPT FTS", "MID LAY", "ORE BLK PAS INS", "threePoint pumpFake fades", "post cross lob", { STM: 2 }, 6],
-    "All Around": [0, 8, "LAY DRB TPT", "MID FTS DNK PAS DRE STL", "ORE BLK", "twoPoint pass runPlay", "post offReb", {}, 5]
+    "All Around": [0, 8, "LAY DRB TPT", "MID FTS DNK PAS DRE STL", "ORE BLK", "twoPoint pass runPlay", "post offReb", {}, 5],
+    // Second pass from the same NBA save. These carry the adjectives that most of the
+    // save's own arc names are built from: 2-Way (62 names), Crafty (24), Athletic (15),
+    // 3PT (13), Inside-Out (12), Rebounding (12), Stretch, Perimeter, Interior, Diming, Pesky.
+    "2-Way Wing": [2, 5, "STL DRE TPT", "LAY MID FTS", "ORE INS BLK", "stealOnBall defReb threePoint", "post hook", { STM: 2 }, 10],
+    "Crafty Guard": [0, 2, "DRB LAY", "MID PAS FTS", "ORE BLK INS", "cross spin step floater", "post offReb", { SPD: 2 }, 9],
+    "Combo Guard": [0, 2, "MID TPT DRB", "LAY FTS PAS", "ORE BLK INS", "twoPoint threePoint cross", "post offReb", { SPD: 1 }, 8],
+    "Athletic Finisher": [1, 6, "DNK LAY", "ORE DRE FTS", "TPT PAS", "dunk lob floater", "threePoint post", { SPD: 2 }, 9],
+    "3PT Threat": [1, 6, "TPT FTS", "MID LAY", "INS ORE BLK", "threePoint pumpFake step", "post hook", { STM: 2 }, 9],
+    "Perimeter Defender": [1, 4, "STL DRE", "TPT LAY FTS", "INS ORE BLK", "stealOnBall stealOffBall takeCharge", "post hook", { SPD: 2 }, 8],
+    "Inside-Out Scorer": [4, 8, "INS TPT", "MID LAY DRE", "PAS STL DRB", "post threePoint fades", "cross lob", { STR: 2 }, 7],
+    "Interior Defender": [6, 8, "BLK DRE INS", "ORE DNK", "TPT DRB PAS", "block defReb takeCharge", "threePoint cross", { STR: 3 }, 7],
+    "Stretch Forward": [4, 6, "TPT MID", "LAY FTS DRE", "ORE BLK INS", "threePoint fades pumpFake", "post offReb", { STM: 1 }, 7],
+    "Rebounder": [4, 8, "ORE DRE", "INS DNK BLK", "TPT DRB PAS", "offReb defReb", "threePoint step", { STR: 3 }, 6],
+    "Dimer": [0, 3, "PAS", "DRB LAY MID", "ORE BLK INS", "pass lob runPlay", "post dunk", { SPD: 1 }, 6],
+    "Pesky Defender": [0, 3, "STL", "DRB LAY DRE", "INS ORE BLK", "stealOnBall stealOffBall", "post hook", { SPD: 3 }, 5]
   };
   var HYBRID_PARTNERS = {
-    "Slasher": ["Playmaker", "Shot Creator", "Defensive Specialist", "Sharpshooter", "3-Level Scorer", "High Flyer", "Mid-Range Specialist", "Ball Hawk"],
-    "Sharpshooter": ["Shot Creator", "Playmaker", "Slasher", "Spot-Up Shooter", "3-Level Scorer", "Ball Hawk"],
-    "Defensive Specialist": ["3-and-D", "Slasher", "Rim Protector", "Ball Hawk", "High Flyer"],
-    "3-and-D": ["Slasher", "Shot Creator", "Defensive Specialist", "Spot-Up Shooter", "Ball Hawk"],
-    "Playmaker": ["Shot Creator", "Slasher", "Sharpshooter", "Ball Hawk", "Mid-Range Specialist"],
-    "Stretch Big": ["Rim Protector", "Post Scorer", "Point Forward", "Spot-Up Shooter"],
-    "Rim Protector": ["Rim Runner", "Glass Cleaner", "Stretch Big", "Post Scorer", "High Flyer"],
-    "Post Scorer": ["Stretch Big", "Glass Cleaner", "Rim Protector", "Mid-Range Specialist", "Spot-Up Shooter"],
-    "Rim Runner": ["Rim Protector", "Glass Cleaner", "High Flyer"],
-    "Shot Creator": ["Playmaker", "Slasher", "Sharpshooter", "3-Level Scorer", "Mid-Range Specialist", "All Around"],
-    "Point Forward": ["Slasher", "Shot Creator", "3-and-D", "3-Level Scorer", "Spot-Up Shooter"],
-    "Glass Cleaner": ["Rim Protector", "Post Scorer", "Rim Runner", "Spot-Up Shooter"],
-    "3-Level Scorer": ["Shot Creator", "Slasher", "Sharpshooter", "Playmaker", "High Flyer", "Point Forward"],
-    "High Flyer": ["Slasher", "Rim Runner", "Defensive Specialist", "3-Level Scorer", "Rim Protector"],
-    "Mid-Range Specialist": ["Shot Creator", "Slasher", "Playmaker", "Post Scorer", "All Around"],
-    "Ball Hawk": ["Playmaker", "Slasher", "Sharpshooter", "3-and-D", "Defensive Specialist"],
-    "Spot-Up Shooter": ["Sharpshooter", "3-and-D", "Stretch Big", "Shot Creator", "Glass Cleaner"],
-    "All Around": ["Shot Creator", "Playmaker", "Slasher", "Defensive Specialist", "3-Level Scorer"]
+    "3-and-D": ["Point Forward", "Slasher", "Athletic Finisher", "High Flyer", "Mid-Range Specialist", "Post Scorer"],
+    "Post Scorer": ["2-Way Wing", "Defensive Specialist", "Glass Cleaner", "Rebounder", "Spot-Up Shooter", "Rim Protector"],
+    "Rim Protector": ["Interior Defender", "All Around", "Post Scorer", "Inside-Out Scorer", "Rim Runner", "Spot-Up Shooter", "High Flyer"],
+    "Slasher": ["Crafty Guard", "Athletic Finisher", "Defensive Specialist", "Sharpshooter", "2-Way Wing", "3PT Threat", "Perimeter Defender", "3-and-D"],
+    "Shot Creator": ["Crafty Guard", "Defensive Specialist", "Athletic Finisher", "High Flyer", "Perimeter Defender", "Slasher", "2-Way Wing"],
+    "Point Forward": ["2-Way Wing", "Defensive Specialist", "Sharpshooter", "Stretch Big", "3-and-D", "3PT Threat"],
+    "Playmaker": ["Crafty Guard", "Sharpshooter", "3-Level Scorer", "Defensive Specialist", "2-Way Wing", "3PT Threat", "Athletic Finisher"],
+    "Rim Runner": ["All Around", "Interior Defender", "Post Scorer", "Stretch Big", "Inside-Out Scorer", "Rim Protector"],
+    "Glass Cleaner": ["All Around", "Post Scorer", "3-Level Scorer", "Inside-Out Scorer", "Point Forward", "Spot-Up Shooter"],
+    "Defensive Specialist": ["3-Level Scorer", "All Around", "Sharpshooter", "Shot Creator", "Slasher", "Point Forward"],
+    "Sharpshooter": ["Crafty Guard", "Defensive Specialist", "Slasher", "Point Forward", "Athletic Finisher", "Ball Hawk", "High Flyer"],
+    "Stretch Big": ["Inside-Out Scorer", "Point Forward", "High Flyer", "Rim Runner", "All Around", "Athletic Finisher", "Mid-Range Specialist"],
+    "3-Level Scorer": ["Defensive Specialist", "Perimeter Defender", "Ball Hawk", "2-Way Wing", "Playmaker", "Rebounder"],
+    "High Flyer": ["2-Way Wing", "Defensive Specialist", "Sharpshooter", "Shot Creator", "Stretch Big", "Combo Guard"],
+    "Mid-Range Specialist": ["2-Way Wing", "Defensive Specialist", "Stretch Big", "3-and-D", "3PT Threat", "Athletic Finisher"],
+    "Ball Hawk": ["Sharpshooter", "3-Level Scorer", "3PT Threat", "Athletic Finisher", "High Flyer", "All Around"],
+    "Spot-Up Shooter": ["Defensive Specialist", "Post Scorer", "Interior Defender", "Point Forward", "Slasher", "Athletic Finisher"],
+    "All Around": ["Defensive Specialist", "Interior Defender", "Glass Cleaner", "Perimeter Defender", "Rebounder", "Rim Protector"],
+    "2-Way Wing": ["Point Forward", "Slasher", "Athletic Finisher", "High Flyer", "Mid-Range Specialist", "Post Scorer"],
+    "Crafty Guard": ["Sharpshooter", "Defensive Specialist", "2-Way Wing", "3PT Threat", "Perimeter Defender", "3-and-D"],
+    "Combo Guard": ["Shot Creator", "Sharpshooter", "Crafty Guard", "Defensive Specialist", "Athletic Finisher", "High Flyer", "Perimeter Defender", "Dimer"],
+    "Athletic Finisher": ["2-Way Wing", "Defensive Specialist", "Sharpshooter", "Shot Creator", "Combo Guard", "Stretch Big"],
+    "3PT Threat": ["Defensive Specialist", "Slasher", "Point Forward", "Post Scorer", "Athletic Finisher", "High Flyer"],
+    "Perimeter Defender": ["3-Level Scorer", "All Around", "Sharpshooter", "Shot Creator", "Slasher", "Combo Guard"],
+    "Inside-Out Scorer": ["Defensive Specialist", "Point Forward", "Glass Cleaner", "High Flyer", "Rebounder", "Slasher"],
+    "Interior Defender": ["All Around", "Rim Runner", "Spot-Up Shooter", "High Flyer", "3PT Threat", "Athletic Finisher"],
+    "Stretch Forward": ["Defensive Specialist", "Point Forward", "Interior Defender", "Slasher", "Athletic Finisher", "High Flyer"],
+    "Rebounder": ["All Around", "Post Scorer", "3-Level Scorer", "Point Forward", "High Flyer", "Inside-Out Scorer"],
+    "Dimer": ["All Around", "Sharpshooter", "Shot Creator", "3-Level Scorer", "Combo Guard", "Defensive Specialist"],
+    "Pesky Defender": ["All Around", "Sharpshooter", "Shot Creator", "3-Level Scorer", "Combo Guard", "Slasher"]
   };
   var ADJ = {
     "Slasher": "Slashing", "Sharpshooter": "Sharpshooting", "Defensive Specialist": "Lockdown", "3-and-D": "3-and-D",
     "Playmaker": "Playmaking", "Stretch Big": "Floor Spacing", "Rim Protector": "Rim Protecting", "Post Scorer": "Post Scoring",
     "Rim Runner": "Rim Running", "Shot Creator": "Shot Creating", "Point Forward": "Playmaking", "Glass Cleaner": "Glass Cleaning",
     "3-Level Scorer": "3-Level", "High Flyer": "High Flying", "Mid-Range Specialist": "Mid-Range",
-    "Ball Hawk": "Ball-Hawking", "Spot-Up Shooter": "Spot-Up", "All Around": "All Around"
+    "Ball Hawk": "Ball-Hawking", "Spot-Up Shooter": "Spot-Up", "All Around": "All Around",
+    "2-Way Wing": "2-Way",
+    "Crafty Guard": "Crafty",
+    "Combo Guard": "Combo",
+    "Athletic Finisher": "Athletic",
+    "3PT Threat": "3PT",
+    "Perimeter Defender": "Perimeter",
+    "Inside-Out Scorer": "Inside-Out",
+    "Interior Defender": "Interior",
+    "Stretch Forward": "Stretch",
+    "Rebounder": "Rebounding",
+    "Dimer": "Diming",
+    "Pesky Defender": "Pesky"
   };
   var W_CORE = 3, W_SUPPORT = 2, W_WEAK = 0.7, W_OTHER = 1.2;
 
@@ -193,15 +231,6 @@
     };
   }
 
-  // ----------------------------------------------------------- AGES ----
-  // draft: 19 to 22. fresh18: every freshman is 18. freshDynamic: 18 (70%), 19 (29%), 17 (1%), never older.
-  var AGE_RANGE = { draft: [19, 22], fresh18: [18, 18], freshDynamic: [17, 19] };
-  function rollAge(rng, mode) {
-    if (mode === "fresh18") return 18;
-    if (mode === "freshDynamic") return rng.pick([[17, 1], [18, 70], [19, 29]]);
-    return rng.randint(19, 22);
-  }
-
   // ---------------------------------------------------------- TIERS ----
   // 3.5 stars is the floor. N35[q] = number of 3.5-star prospects at quality q (at q=3, 80% are 4+ stars).
   var N35 = [18, 16, 14, 12, 10, 9, 7, 6, 5, 4, 3];
@@ -209,20 +238,14 @@
   // 4.5-star count is chosen by the user (slider); it comes out of the 4-star pool.
   function sz(size) { return size == null || isNaN(size) ? CLASS_SIZE : Math.max(9, Math.min(MAX_SIZE, Math.round(size))); }
   function n35Of(q, size) { size = sz(size); return Math.max(0, Math.min(size - q, Math.round(N35[q] * size / CLASS_SIZE))); }
-  // n4 (optional): exact number of 4-star players. When set, 3.5-stars are whatever is left after 5, 4.5 and 4 stars,
-  // so a class can be made as 3.5-heavy as you like. When null, the N35 scaling decides the 3.5-star count.
-  function hasN4(n4) { return n4 != null && !isNaN(n4); }
-  function maxN45(q, size, n4set) { size = sz(size); q = Math.min(q, size); return n4set ? size - q : Math.max(0, size - q - n35Of(q, size)); }
+  function maxN45(q, size) { size = sz(size); return Math.max(0, size - q - n35Of(q, size)); }
   function defaultN45(q, size) { return Math.round(maxN45(q, size) * (0.30 + 0.02 * q)); }
-  function classTiers(q, n45, size, n4) {
+  function classTiers(q, n45, size) {
     size = sz(size); q = Math.min(q, size);
-    var fixed4 = hasN4(n4), rest = maxN45(q, size, fixed4);
+    var n35 = n35Of(q, size), rest = maxN45(q, size);
     if (n45 == null || isNaN(n45)) n45 = defaultN45(q, size);
     n45 = Math.max(0, Math.min(rest, Math.round(n45)));
-    var n35;
-    if (fixed4) { n4 = Math.max(0, Math.min(rest - n45, Math.round(n4))); n35 = rest - n45 - n4; }
-    else { n4 = rest - n45; n35 = n35Of(q, size); }
-    var pots = [];
+    var n4 = rest - n45, pots = [];
     function add(p, n) { for (var i = 0; i < n; i++) pots.push(p); }
     add(10, q); add(9, n45); add(8, n4); add(7, n35);
     return pots;
@@ -244,13 +267,10 @@
   function fits(a, pos) { return ARCH[a][0] <= pos && pos <= ARCH[a][1]; }
 
   // Split `total` points over slots in [lo, hi], proportional to weights.
-  // Split `total` points over slots in [lo, hi[i]], proportional to weights after a random roll of +/-`jit`.
-  // hi can be one number or a per-slot array (used to give core skills their own 16-20 ceiling).
-  function distribute(rng, total, weights, lo, hi, jit) {
-    lo = lo == null ? 1 : lo; jit = jit == null ? 0.2 : jit;
-    var n = weights.length, i;
-    var room = weights.map(function (_, j) { return (Array.isArray(hi) ? hi[j] : (hi == null ? 20 : hi)) - lo; });
-    var w = weights.map(function (x) { return x * rng.uniform(1 - jit, 1 + jit); });
+  function distribute(rng, total, weights, lo, hi) {
+    lo = lo == null ? 1 : lo; hi = hi == null ? 20 : hi;
+    var n = weights.length, room = hi - lo, i;
+    var w = weights.map(function (x) { return x * rng.uniform(0.8, 1.2); });
     var vals = new Array(n).fill(0), free = range(0, n - 1), remaining = total - lo * n;
     while (free.length && remaining > 1e-9) {
       var sw = free.reduce(function (a, j) { return a + w[j]; }, 0);
@@ -258,62 +278,15 @@
       remaining = 0;
       var keep = [];
       free.forEach(function (j) {
-        if (vals[j] > room[j]) { remaining += vals[j] - room[j]; vals[j] = room[j]; } else keep.push(j);
+        if (vals[j] > room) { remaining += vals[j] - room; vals[j] = room; } else keep.push(j);
       });
       free = keep;
     }
     var ints = vals.map(function (v) { return Math.floor(v + 1e-9); });
     var short = (total - lo * n) - ints.reduce(function (a, b) { return a + b; }, 0);
     var order = range(0, n - 1).sort(function (a, b) { return (vals[b] - ints[b]) - (vals[a] - ints[a]); });
-    for (var k = 0; short > 0 && k < n * 40; k++) { i = order[k % n]; if (ints[i] < room[i]) { ints[i]++; short--; } }
+    for (var k = 0; short > 0; k++) { i = order[k % n]; if (ints[i] < room) { ints[i]++; short--; } }
     return ints.map(function (v) { return v + lo; });
-  }
-
-  // Skill families for the random bonus / weak spot. A bonus lifts a whole family a little (e.g. "Rebounding"
-  // lifts both ORE and DRE slightly) rather than spiking one skill.
-  var FAMILIES = {
-    "Finishing": ["LAY", "DNK", "INS"], "Shooting": ["MID", "TPT", "FTS"], "Creating": ["DRB", "PAS"],
-    "Rebounding": ["ORE", "DRE"], "Defense": ["STL", "BLK"]
-  };
-  var BONUS_LIFT = 1.3, WEAK_CUT = 0.5;
-  // Elite caps are rare and rolled once per player: at most one specialty skill reaches 19 or 20.
-  // Everyone else's specialty skills top out at 16 to 18 (better prospects lean toward 18).
-  var ELITE = { 10: [0.30, 0.30], 9: [0.03, 0.15], 8: [0, 0.07], 7: [0, 0.03], 6: [0, 0.01] }; // [P(20), P(19)]
-  var CORE_W = { 10: [[16, 2], [17, 4], [18, 4]], 9: [[16, 2], [17, 4], [18, 4]], 8: [[16, 3], [17, 4], [18, 3]] };
-  var NONCORE_MAX = 17;
-  // Give each player his own shape: specialty skills are filled to a 16-18 cap (19 rare, 20 basically only the best),
-  // one bonus family, one weak spot, the other points rolled across the rest.
-  function buildSkills(rng, total, w, pot, coreList) {
-    var core = SKILLS.filter(function (s) { return coreList.indexOf(s) >= 0; });
-    var fams = Object.keys(FAMILIES).filter(function (f) {
-      return !FAMILIES[f].some(function (s) { return core.indexOf(s) >= 0; });
-    });
-    var bonus = fams.length ? rng.choice(fams) : null;
-    var weakPool = SKILLS.filter(function (s) { return core.indexOf(s) < 0 && (!bonus || FAMILIES[bonus].indexOf(s) < 0); });
-    var weak = rng.choice(weakPool);
-    var ww = {};
-    SKILLS.forEach(function (s) {
-      ww[s] = w[s] * (bonus && FAMILIES[bonus].indexOf(s) >= 0 ? BONUS_LIFT : 1) * (s === weak ? WEAK_CUT : 1);
-    });
-    var cw = CORE_W[pot] || [[16, 4], [17, 4], [18, 2]];
-    var coreVal = {};
-    core.forEach(function (s) { coreVal[s] = rng.pick(cw); });
-    var e = ELITE[pot] || [0, 0], r = rng.random();
-    if (r < e[0] + e[1]) coreVal[rng.choice(core)] = r < e[0] ? 20 : 19;
-    var rest = SKILLS.filter(function (s) { return core.indexOf(s) < 0; });
-    var left = total - core.reduce(function (a, s) { return a + coreVal[s]; }, 0);
-    // non-core ceilings: support 13-17, everything else 11-16; raised toward 17 only if the points don't fit
-    var hi = rest.map(function (s) { return w[s] >= 1.6 ? rng.randint(13, 17) : rng.randint(11, 16); });
-    var sum = hi.reduce(function (a, b) { return a + b; }, 0);
-    while (sum < left) {
-      var open = rest.map(function (s, j) { return j; }).filter(function (j) { return hi[j] < NONCORE_MAX; });
-      if (!open.length) open = rest.map(function (s, j) { return j; }).filter(function (j) { return hi[j] < 20; });
-      var low = Math.min.apply(null, open.map(function (j) { return hi[j]; }));
-      hi[rng.choice(open.filter(function (j) { return hi[j] === low; }))]++; sum++;
-    }
-    var vals = distribute(rng, left, rest.map(function (s) { return ww[s]; }), 1, hi, 0.4), byS = {};
-    rest.forEach(function (s, j) { byS[s] = vals[j]; });
-    return { capv: SKILLS.map(function (s) { return core.indexOf(s) >= 0 ? coreVal[s] : byS[s]; }), bonus: bonus, weak: weak, core: core };
   }
 
   // Take `gap` points off proportionally to each cap.
@@ -332,15 +305,10 @@
     var natural, eye;
     if (dark) { natural = rng.pick(HAIR_DARK); eye = rng.pick(EYE_DARK); }
     else {
-      // facial hair and brows use the natural color, which must be clearly darker than the skin
-      var okHair = HAIR_LIGHT.filter(function (h) { return lum(skin) - lum(h[0]) >= 0.15; });
-      natural = rng.pick(okHair.length ? okHair : [["141020", 1]]);
+      for (var t = 0; t < 50; t++) { natural = rng.pick(HAIR_LIGHT); if (Math.abs(lum(natural) - lum(skin)) >= 0.15) break; }
       eye = rng.pick(EYE_LIGHT);
     }
-    // a dyed (wild) scalp color must be lighter than the natural color, so facial hair stays the darker one
-    var wild = HAIR_WILD.filter(function (c) { return lum(c) > lum(natural); });
-    var hairRoll = rng.random();
-    var hairC = hairRoll < 0.01 && wild.length ? rng.choice(wild) : natural;
+    var hairC = rng.random() < 0.01 ? rng.choice(HAIR_WILD) : natural;
     var r = rng.random(), fh = r < 0.45 ? 0 : (r < 0.90 ? rng.choice(FHAIR_COMMON) : rng.choice(FHAIR_RARE));
     return {
       skinC: skin, eyeC: eye, unibrow: rng.random() < 0.005, browC: natural,
@@ -448,8 +416,8 @@
   // }
   var POTS = [10, 9, 8, 7, 6];
   function starLabel(pot) { return (pot / 2) + "★"; }
-  function countsFromAuto(q5, n45, size, n4) {
-    var t = classTiers(q5, n45, size, n4), c = { 10: 0, 9: 0, 8: 0, 7: 0, 6: 0 };
+  function countsFromAuto(q5, n45, size) {
+    var t = classTiers(q5, n45, size), c = { 10: 0, 9: 0, 8: 0, 7: 0, 6: 0 };
     t.forEach(function (p) { c[p]++; });
     return c;
   }
@@ -589,7 +557,7 @@
       }
       var w1 = skillWeights(prim), w = w1;
       if (arcs.length > 1) { var w2 = skillWeights(arcs[1]); w = {}; SKILLS.forEach(function (s) { w[s] = 0.6 * w1[s] + 0.4 * w2[s]; }); }
-      var built = buildSkills(rng, (capOvr - 16) * 2, w, pot, ARCH[prim][2].split(" ")), capv = built.capv;
+      var capv = distribute(rng, (capOvr - 16) * 2, SKILLS.map(function (s) { return w[s]; }));
       // starting OVR: ceiling minus 15 to 27 (centred on 21, so most land near it); the 3 best are 7 to 14 below
       var gapOvr = top3.indexOf(i) >= 0 ? rng.randint(7, 14) : 21 + rng.randint(-3, 3) + rng.randint(-3, 3);
       // diamonds in the rough: some high-potential prospects start far below their ceiling (28 to 35)
@@ -618,7 +586,7 @@
       var fields = {
         id: i + 1, tid: 0, fn: nm[0], ln: nm[1], tag: "", home: "", ctry: ctry,  // game fills hometown from loc; a typed home breaks its lookup
         loc: { x: town[0], y: town[1] },
-        age: rollAge(rng, opts.ages), ht: ht, wt: wt, yrs: 0, num: num, gender: 0, pos: pos,
+        age: rng.randint(19, 22), ht: ht, wt: wt, yrs: 0, num: num, gender: 0, pos: pos,
         pri: 11, sec: rng.randint(1, 10),
         arc: arcs.length === 1 ? prim : ADJ[arcs[1]] + " " + prim,
         pot: pot, regressionAge: rng.choice([31, 32, 33, 33, 34, 34, 34, 35, 35, 36, 37]),
@@ -635,7 +603,7 @@
         shirtC: "FFFFFF", tieC: rng.choice(["C42C36", "10316B", "306943", "141020"]),
         pantC: "1F2937", shoeC: "000000", laceC: "", soleC: "000000"
       }];
-      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom, slot: slot.idx, raw: raw, bonus: built.bonus, weak: built.weak, core: built.core } });
+      players.push({ player: pl, meta: { arcs: arcs, top3: top3.indexOf(i) >= 0, wearer: wearers.indexOf(i) >= 0, dark: dark, custom: slot.custom, slot: slot.idx, raw: raw } });
     }
     function skillSum(pl, idx) { return SKILLS.reduce(function (a, s) { return a + pl.attributes[s][idx]; }, 0); }
     players.sort(function (a, b) {
@@ -692,9 +660,6 @@
       if (HAIR_IDS.indexOf(+a.hair) < 0) bad(p, "banned hair " + a.hair);
       if (FHAIR_BANNED.indexOf(+a.fHair) >= 0 || +a.fHair < 0 || +a.fHair > 31) bad(p, "banned facial hair " + a.fHair);
       if (a.browC !== a.fHairC) bad(p, "brow != facial hair color");
-      if (lum(a.fHairC) >= lum(a.skinC)) bad(p, "facial hair not darker than skin");
-      if (a.fHairC !== a.hairC && lum(a.fHairC) >= lum(a.hairC)) bad(p, "facial hair not darker than hair");
-      if (a.eyeC === "46211F") bad(p, "light brown eyes");
       if (a.hairC !== a.browC && HAIR_WILD.indexOf(a.hairC) < 0) bad(p, "hair color mismatch");
       if (m.dark && a.browC !== "141020") bad(p, "dark skin with non-black hair");
       if (acc.length !== 4 || acc.some(function (y) { return JSON.stringify(y) !== JSON.stringify(acc[0]); })) bad(p, "accessory sets differ");
@@ -715,21 +680,12 @@
       var cur = SKILLS.map(function (s) { return p.attributes[s][0]; }), capv = SKILLS.map(function (s) { return p.attributes[s][1]; });
       if (wore && ovrOf(capv) < bestCap && ovrOf(capv) > medianCap) bad(p, "gear on a player outside the best / bottom half");
       if (cur.some(function (c, j) { return !(c >= 0 && c <= capv[j] && capv[j] <= 20); })) bad(p, "attribute out of range");
-      if (capv.filter(function (c) { return c >= 19; }).length > 1) bad(p, "more than one 19+ skill");
-      SKILLS.forEach(function (s, j) {
-        var isCore = m.core.indexOf(s) >= 0;
-        if (isCore && capv[j] < 16) bad(p, "specialty " + s + " below 16");
-        if (capv[j] === 20 && (!isCore || p.pot < 9)) bad(p, "20 " + s + " on a non-elite player");
-        if (capv[j] === 19 && !isCore) bad(p, "19 " + s + " outside his specialty");
-        if (!isCore && capv[j] > NONCORE_MAX && p.pot < 10) bad(p, "off-skill " + s + " capped at " + capv[j]);
-      });
       var co = ovrOf(cur), ko = ovrOf(capv);
       if (POTS.indexOf(p.pot) < 0) bad(p, "stars out of range");
       if (ko !== 30 + 7 * p.pot) bad(p, "cap " + ko + " is not the pot " + p.pot + " ceiling");
       var gap = ko - co;
       if (m.top3) { tops++; if (gap < 7 || gap > 14) bad(p, "top-3 gap " + gap); } else if (m.raw ? (gap < 28 || gap > 35 || p.pot < 8) : (gap < 15 || gap > 27)) bad(p, "gap " + gap);
-      var ar = AGE_RANGE[opts.ages] || AGE_RANGE.draft;
-      if (p.age < ar[0] || p.age > ar[1]) bad(p, "age " + p.age);
+      if (p.age < 19 || p.age > 22) bad(p, "age");
       if (!DATA.LOCS[p.ctry] || !DATA.LOCS[p.ctry].some(function (l) { return l[0] === p.loc.x && l[1] === p.loc.y; })) bad(p, "hometown is not a city the game knows");
       if (p.home !== "") bad(p, "hometown text must be blank");
       if (!m.custom && ALLOWED_NUMS.indexOf(p.num) < 0) bad(p, "jersey number");
@@ -785,7 +741,7 @@
   }
 
   var API = {
-    CLASS_SIZE: CLASS_SIZE, MAX_SIZE: MAX_SIZE, FAMILIES: FAMILIES, AGE_RANGE: AGE_RANGE, SKILLS: SKILLS, BADGE_NAMES: BADGE_NAMES, ARCH: ARCH,
+    CLASS_SIZE: CLASS_SIZE, MAX_SIZE: MAX_SIZE, SKILLS: SKILLS, BADGE_NAMES: BADGE_NAMES, ARCH: ARCH,
     classTiers: classTiers, tierSummary: tierSummary, maxN45: maxN45, defaultN45: defaultN45, countsFromAuto: countsFromAuto, expectedArch: expectedArch,
     totalOf: totalOf, checkOpts: checkOpts, parseNum: parseNum, makeRng: makeRng, POTS: POTS, generate: generate, validate: validate,
     makeClass: makeClass, buildFile: buildFile, ovrOf: ovrOf, lum: lum,
